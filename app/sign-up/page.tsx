@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 export default function SignUpPage() {
   const router = useRouter();
 
+  "use client";
+// deploy refresh
+
   return (
     <div
       style={{
