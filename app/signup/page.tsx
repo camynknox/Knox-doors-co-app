@@ -28,69 +28,42 @@ export default function SignupPage() {
       return;
     }
 
-    setMessage("Account created. Check your email to confirm your account.");
+    setMessage("Check your email to confirm your account.");
     setLoading(false);
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-white px-6">
-      <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
-        <h1 className="text-3xl font-semibold tracking-tight text-black">
-          Create your account
-        </h1>
-        <p className="mt-2 text-sm text-gray-600">
-          Sign up to access Knox Doors Co.
-        </p>
+    <main style={{ padding: 40 }}>
+      <h1>Create Account</h1>
 
-        <form onSubmit={handleSignUp} className="mt-6 space-y-4">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-black">
-              Email
-            </label>
-            <input
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-black"
-            />
-          </div>
+      <form onSubmit={handleSignUp}>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          style={{ display: "block", marginBottom: 10 }}
+        />
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-black">
-              Password
-            </label>
-            <input
-              type="password"
-              placeholder="Enter password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-black"
-            />
-          </div>
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          style={{ display: "block", marginBottom: 10 }}
+        />
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-xl bg-black px-4 py-3 text-white transition hover:opacity-90 disabled:opacity-60"
-          >
-            {loading ? "Creating account..." : "Sign Up"}
-          </button>
-        </form>
+        <button type="submit" disabled={loading}>
+          {loading ? "Creating..." : "Sign Up"}
+        </button>
+      </form>
 
-        {message ? (
-          <p className="mt-4 text-sm text-gray-700">{message}</p>
-        ) : null}
+      <p>{message}</p>
 
-        <p className="mt-6 text-center text-sm text-gray-600">
-          Already have an account?{" "}
-          <Link href="/login" className="font-medium text-black underline underline-offset-4">
-            Log in
-          </Link>
-        </p>
-      </div>
+      <p style={{ marginTop: 20 }}>
+        Already have an account?{" "}
+        <Link href="/login">Log in</Link>
+      </p>
     </main>
   );
 }
