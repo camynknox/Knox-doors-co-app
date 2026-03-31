@@ -56,6 +56,13 @@ export default function TopNav() {
     router.push("/login");
   }
 
+  function getHomeRoute(currentRole: string) {
+    if (currentRole === "team_leader") return "/team-dashboard";
+    if (currentRole === "assistant_admin" || currentRole === "admin") return "/admin-deals";
+    return "/rep-dashboard";
+  }
+
+  const homeRoute = getHomeRoute(role);
   const links = getLinks(role);
 
   return (
@@ -78,7 +85,7 @@ export default function TopNav() {
         }}
       >
         <button
-          onClick={() => router.push("/")}
+          onClick={() => router.push(homeRoute)}
           style={{
             background: "transparent",
             border: "none",
@@ -117,8 +124,8 @@ export default function TopNav() {
         >
           <NavButton
             label="Home"
-            active={pathname === "/"}
-            onClick={() => router.push("/")}
+            active={pathname === homeRoute}
+            onClick={() => router.push(homeRoute)}
           />
 
           {!loading &&
