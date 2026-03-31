@@ -9,7 +9,6 @@ export default function DocumentsPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6">
-      
       <img
         src="/logo2.png"
         alt="Knox Doors Co"
@@ -17,16 +16,12 @@ export default function DocumentsPage() {
       />
 
       <h1 className="text-2xl font-semibold mb-2 text-center">
-        Documents (Skipped for Now)
+        Documents (Skipped)
       </h1>
-
-      <p className="text-gray-500 mb-6 text-center">
-        Continuing setup...
-      </p>
 
       <button
         onClick={() => router.push('/rep-dashboard')}
-        className="bg-black text-white px-6 py-3 rounded-lg hover:opacity-80 transition"
+        className="bg-black text-white px-6 py-3 rounded-lg"
       >
         Continue
       </button>
