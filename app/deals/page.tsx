@@ -336,14 +336,17 @@ export default function DealsPage() {
                     );
                   })}
 
-                  <div className="lg:min-w-[220px]">
-                    <Select
-                      label="Voice"
-                      value={voice}
-                      onChange={setVoice}
-                      options={YES_NO_OPTIONS}
-                    />
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setVoice(voice === "Yes" ? "" : "Yes")}
+                    className={`rounded-2xl border px-4 py-3 text-left text-sm font-medium transition ${
+                      voice === "Yes"
+                        ? "border-zinc-900 bg-zinc-900 text-white"
+                        : "border-zinc-200 bg-white text-zinc-800 hover:border-zinc-300"
+                    }`}
+                  >
+                    Voice
+                  </button>
                 </div>
               </div>
             </SectionCard>
