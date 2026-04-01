@@ -9,7 +9,6 @@ const ALL_ROLES = ["rep", "team_leader", "assistant_admin", "admin"];
 const ASSISTANT_ADMIN_ALLOWED_ROLES = ["rep", "team_leader", "assistant_admin"];
 const TEAM_LEADER_ALLOWED_ROLES = ["rep", "team_leader"];
 const TEAMS = ["Internal", "Forsyth"];
-const ROLE_FILTERS = ["all", "rep", "team_leader", "assistant_admin", "admin"];
 
 type ProfileRow = {
   id: string;
@@ -113,6 +112,22 @@ export default function RoleManagerPage() {
     if (currentUserRole === "assistant_admin") return ASSISTANT_ADMIN_ALLOWED_ROLES;
     if (currentUserRole === "team_leader") return TEAM_LEADER_ALLOWED_ROLES;
     return [];
+  }
+
+  function getVisibleRoleFilters() {
+    if (currentUserRole === "admin") {
+      return ["all", "rep", "team_leader", "assistant_admin", "admin"];
+    }
+
+    if (currentUserRole === "assistant_admin") {
+      return ["all", "rep", "team_leader", "assistant_admin"];
+    }
+
+    if (currentUserRole === "team_leader") {
+      return ["all", "rep", "team_leader"];
+    }
+
+    return ["all"];
   }
 
   function canEditTarget(user: ProfileRow) {
@@ -249,6 +264,7 @@ export default function RoleManagerPage() {
   if (!authorized) return null;
 
   const allowedRoles = getAllowedRoles();
+  const visibleRoleFilters = getVisibleRoleFilters();
 
   return (
     <div className="min-h-screen bg-zinc-50">
@@ -274,8 +290,8 @@ export default function RoleManagerPage() {
 
           <div className="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm">
             <div className="flex flex-col gap-3">
-              <div className="grid grid-cols-5 gap-1.5">
-                {ROLE_FILTERS.map((role) => (
+              <div className={`grid gap-1.5 ${visibleRoleFilters.length === 5 ? "grid-cols-5" : visibleRoleFilters.length === 4 ? "grid-cols-4" : "grid-cols-3"}`}>
+                {visibleRoleFilters.map((role) => (
                   <button
                     key={role}
                     onClick={() => setActiveRoleFilter(role)}
@@ -329,7 +345,7 @@ export default function RoleManagerPage() {
                         Assign Role
                       </div>
                       {editable ? (
-                        <div className="grid grid-cols-4 gap-1.5">
+                        <div className={`grid gap-1.5 ${allowedRoles.length === 4 ? "grid-cols-4" : allowedRoles.length === 3 ? "grid-cols-3" : "grid-cols-2"}`}>
                           {allowedRoles.map((role) => (
                             <button
                               key={role}
