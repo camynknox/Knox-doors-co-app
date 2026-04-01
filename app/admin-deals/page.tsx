@@ -235,7 +235,7 @@ export default function AdminDealsPage() {
             {message}
           </div>
 
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+          <div className="grid grid-cols-5 gap-2">
             <StatCard label="Deals" value={stats.total} />
             <StatCard label="Pending" value={stats.pending} />
             <StatCard label="Approved" value={stats.approved} />
@@ -406,11 +406,11 @@ function Field({
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-2xl bg-white px-3 py-2 text-black shadow-sm">
-      <div className="truncate text-[10px] font-medium uppercase tracking-wide text-slate-500 sm:text-[11px]">
+    <div className="rounded-2xl bg-white px-2.5 py-2 text-black shadow-sm">
+      <div className="truncate text-[9px] font-medium uppercase tracking-wide text-slate-500 sm:text-[11px]">
         {label}
       </div>
-      <div className="mt-1 text-xl font-bold leading-none sm:text-2xl">{value}</div>
+      <div className="mt-1 text-lg font-bold leading-none sm:text-2xl">{value}</div>
     </div>
   );
 }
@@ -475,10 +475,10 @@ function ActionButton({
     variant === "green"
       ? "bg-emerald-600 text-white hover:bg-emerald-700"
       : variant === "blue"
-      ? "bg-blue-600 text-white hover:bg-blue-700"
-      : variant === "red"
-      ? "bg-red-600 text-white hover:bg-red-700"
-      : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200";
+        ? "bg-blue-600 text-white hover:bg-blue-700"
+        : variant === "red"
+          ? "bg-red-600 text-white hover:bg-red-700"
+          : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200";
 
   return (
     <button

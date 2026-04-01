@@ -252,8 +252,8 @@ export default function DealsPage() {
                 messageType === "success"
                   ? "border-emerald-200 bg-emerald-50 text-emerald-800"
                   : messageType === "error"
-                  ? "border-red-200 bg-red-50 text-red-700"
-                  : "border-zinc-200 bg-white text-zinc-700"
+                    ? "border-red-200 bg-red-50 text-red-700"
+                    : "border-zinc-200 bg-white text-zinc-700"
               }`}
             >
               {message}
@@ -316,37 +316,34 @@ export default function DealsPage() {
               description="Select VAS and any extra service options."
             >
               <div className="space-y-4">
-                <div>
-                  <div className="mb-2 text-sm font-medium text-zinc-800">VAS</div>
-                  <div className="grid gap-2 md:grid-cols-3">
-                    {VAS_OPTIONS.map((opt) => {
-                      const active = vasSelections.includes(opt);
+                <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
+                  {VAS_OPTIONS.map((opt) => {
+                    const active = vasSelections.includes(opt);
 
-                      return (
-                        <button
-                          key={opt}
-                          type="button"
-                          onClick={() => toggleVas(opt)}
-                          className={`rounded-2xl border px-4 py-3 text-left text-sm font-medium transition ${
-                            active
-                              ? "border-zinc-900 bg-zinc-900 text-white"
-                              : "border-zinc-200 bg-white text-zinc-800 hover:border-zinc-300"
-                          }`}
-                        >
-                          {opt}
-                        </button>
-                      );
-                    })}
+                    return (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => toggleVas(opt)}
+                        className={`rounded-2xl border px-4 py-3 text-left text-sm font-medium transition ${
+                          active
+                            ? "border-zinc-900 bg-zinc-900 text-white"
+                            : "border-zinc-200 bg-white text-zinc-800 hover:border-zinc-300"
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    );
+                  })}
+
+                  <div className="lg:min-w-[220px]">
+                    <Select
+                      label="Voice"
+                      value={voice}
+                      onChange={setVoice}
+                      options={YES_NO_OPTIONS}
+                    />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  <Select
-                    label="Voice"
-                    value={voice}
-                    onChange={setVoice}
-                    options={YES_NO_OPTIONS}
-                  />
                 </div>
               </div>
             </SectionCard>
