@@ -5,23 +5,7 @@ import { useRouter } from "next/navigation";
 import TopNav from "@/app/components/top-nav";
 import { supabase } from "@/app/lib/supabase";
 
-const ISP_OPTIONS = [
-  "Brightspeed",
-  "Vyve",
-  "Zito",
-  "Point Broadband",
-  "Clearwave",
-  "Kinetic",
-  "T Fiber",
-  "Ripple",
-  "Frontier",
-  "Xfinity",
-  "MaxxSouth",
-  "Loop",
-  "Sparklight",
-];
-
-type DealRow = {
+type Deal = {
   id: string;
   team?: string | null;
   customer?: string | null;
@@ -33,36 +17,30 @@ type DealRow = {
   package?: string | null;
   vas?: string | null;
   voice?: string | null;
-  tv?: string | null;
-  address?: string | null;
   order_number?: string | null;
   installation_date?: string | null;
   install_date?: string | null;
-  status?: string | null;
   created_at?: string | null;
+  status?: string | null;
   rep_name?: string | null;
   rep_email?: string | null;
+  rep?: string | null;
+  email?: string | null;
 };
 
-export default function AdminDealsPage() {
+export default function TeamDashboardPage() {
   const router = useRouter();
 
-  const [authorized, setAuthorized] = useState(false);
-  const [checking, setChecking] = useState(true);
-  const [rows, setRows] = useState<DealRow[]>([]);
-  const [message, setMessage] = useState("Checking access...");
-  const [loadingRows, setLoadingRows] = useState(false);
-
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [ispFilter, setIspFilter] = useState("all");
-  const [teamFilter, setTeamFilter] = useState("all");
+  const [checkingAccess, setCheckingAccess] = useState(true);
+  const [message, setMessage] = useState("Loading dashboard...");
+  const [teamName, setTeamName] = useState("");
+  const [deals, setDeals] = useState<Deal[]>([]);
 
   useEffect(() => {
-    init();
+    loadDashboard();
   }, []);
 
-  async function init() {
+  async function loadDashboard() {
     const {
       data: { user },
       error: userError,
@@ -73,140 +51,74 @@ export default function AdminDealsPage() {
       return;
     }
 
+    const currentEmail = user.email.trim().toLowerCase();
+
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("role")
-      .eq("email", user.email)
+      .select("role, team")
+      .eq("email", currentEmail)
       .single();
 
-    if (profileError || !profile?.role) {
-      setChecking(false);
-      setMessage("Could not load role.");
+    if (profileError || !profile) {
+      setMessage("Could not load team.");
+      setCheckingAccess(false);
       return;
     }
 
-    const role = profile.role;
-
-    if (role === "admin" || role === "assistant_admin") {
-      setAuthorized(true);
-      setChecking(false);
-      fetchRows();
+    if (profile.role === "admin" || profile.role === "assistant_admin") {
+      router.push("/admin-deals");
       return;
     }
 
-    if (role === "team_leader") {
-      router.push("/team-dashboard");
-      return;
-    }
-
-    if (role === "rep") {
+    if (profile.role === "rep") {
       router.push("/rep-dashboard");
       return;
     }
 
-    router.push("/login");
-  }
-
-  async function fetchRows() {
-    setLoadingRows(true);
+    const currentTeam = profile.team || "";
+    setTeamName(currentTeam);
 
     const { data, error } = await supabase
       .from("deals")
       .select("*")
       .order("created_at", { ascending: false });
 
-    setLoadingRows(false);
-
     if (error) {
       setMessage(error.message);
+      setCheckingAccess(false);
       return;
     }
 
-    const list = (data || []) as DealRow[];
-    setRows(list);
-    setMessage(`Loaded ${list.length} deal(s).`);
-  }
-
-  async function updateStatus(id: string, status: string) {
-    const previousRows = rows;
-
-    setRows((prev) => prev.map((row) => (row.id === id ? { ...row, status } : row)));
-    setMessage(`Updating status to ${status}...`);
-
-    const { error } = await supabase.from("deals").update({ status }).eq("id", id);
-
-    if (error) {
-      setRows(previousRows);
-      setMessage(error.message);
-      return;
-    }
-
-    setMessage(`Status updated to ${status}.`);
-  }
-
-  const teamOptions = useMemo(() => {
-    return Array.from(new Set(rows.map((row) => row.team).filter(Boolean))) as string[];
-  }, [rows]);
-
-  const filteredRows = useMemo(() => {
-    return rows.filter((row) => {
-      const q = search.trim().toLowerCase();
-
-      const matchesSearch =
-        q.length === 0
-          ? true
-          : [
-              row.team,
-              row.customer,
-              row.customer_name,
-              row.customer_email,
-              row.customer_phone,
-              row.phone,
-              row.isp,
-              row.package,
-              row.vas,
-              row.order_number,
-              row.rep_name,
-              row.rep_email,
-            ]
-              .filter(Boolean)
-              .some((value) => String(value).toLowerCase().includes(q));
-
-      const rowStatus = (row.status || "pending").toLowerCase();
-      const matchesStatus = statusFilter === "all" ? true : rowStatus === statusFilter;
-      const matchesIsp = ispFilter === "all" ? true : (row.isp || "") === ispFilter;
-      const matchesTeam = teamFilter === "all" ? true : (row.team || "") === teamFilter;
-
-      return matchesSearch && matchesStatus && matchesIsp && matchesTeam;
+    const teamDeals = ((data || []) as Deal[]).filter((deal) => {
+      return String(deal.team || "").toLowerCase() === String(currentTeam).toLowerCase();
     });
-  }, [rows, search, statusFilter, ispFilter, teamFilter]);
+
+    setDeals(teamDeals);
+    setMessage(`Loaded ${teamDeals.length} deal(s).`);
+    setCheckingAccess(false);
+  }
 
   const stats = useMemo(() => {
     return {
-      total: rows.length,
-      pending: rows.filter((row) => (row.status || "pending") === "pending").length,
-      approved: rows.filter((row) => row.status === "approved").length,
-      installed: rows.filter((row) => row.status === "installed").length,
-      chargebacks: rows.filter((row) => row.status === "chargeback").length,
+      total: deals.length,
+      pending: deals.filter((d) => (d.status || "pending") === "pending").length,
+      approved: deals.filter((d) => d.status === "approved").length,
+      installed: deals.filter((d) => d.status === "installed").length,
     };
-  }, [rows]);
+  }, [deals]);
 
-  if (checking) {
+  if (checkingAccess) {
     return (
       <div className="min-h-screen bg-black text-white">
         <TopNav />
-        <div className="px-4 py-4 sm:px-6">
-          <div className="mx-auto max-w-7xl">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <div className="text-sm text-zinc-300">{message}</div>
-            </div>
+        <div className="px-4 py-4 sm:px-6 sm:py-5">
+          <div className="mx-auto max-w-7xl rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="text-sm text-zinc-300">{message}</div>
           </div>
         </div>
       </div>
     );
   }
-
-  if (!authorized) return null;
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -214,162 +126,70 @@ export default function AdminDealsPage() {
 
       <div className="px-4 py-4 sm:px-6 sm:py-5">
         <div className="mx-auto max-w-7xl space-y-3">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Admin Deals</h1>
-              <p className="mt-0.5 text-xs text-zinc-400 sm:text-sm">
-                Review submissions and update statuses.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={fetchRows}
-              className="h-10 rounded-2xl bg-white px-4 text-sm font-semibold text-black transition hover:bg-zinc-200"
-            >
-              {loadingRows ? "Refreshing..." : "Refresh"}
-            </button>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Team Dashboard</h1>
+            <p className="mt-0.5 text-xs text-zinc-400 sm:text-sm">
+              {teamName ? `Team: ${teamName}` : "Loading team..."}
+            </p>
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-white/90 px-4 py-2.5 text-sm text-slate-700">
             {message}
           </div>
 
-          <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
+          <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
             <StatCard label="Deals" value={stats.total} />
             <StatCard label="Pending" value={stats.pending} />
             <StatCard label="Approved" value={stats.approved} />
             <StatCard label="Installed" value={stats.installed} />
-            <StatCard label="Chargebacks" value={stats.chargebacks} />
-          </div>
-
-          <div className="rounded-3xl border border-white/10 bg-white p-3 text-black shadow-sm sm:p-4">
-            <div className="mb-2 text-lg font-semibold sm:text-xl">Filters</div>
-
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
-              <Field label="Search">
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Customer, email, phone, order #..."
-                  className="h-10 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-500 focus:border-zinc-900"
-                />
-              </Field>
-
-              <Field label="Status">
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="h-10 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition focus:border-zinc-900"
-                >
-                  <option value="all">All statuses</option>
-                  <option value="pending">Pending</option>
-                  <option value="approved">Approved</option>
-                  <option value="installed">Installed</option>
-                  <option value="chargeback">Chargebacks</option>
-                </select>
-              </Field>
-
-              <Field label="ISP">
-                <select
-                  value={ispFilter}
-                  onChange={(e) => setIspFilter(e.target.value)}
-                  className="h-10 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition focus:border-zinc-900"
-                >
-                  <option value="all">All ISPs</option>
-                  {ISP_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-
-              <Field label="Team">
-                <select
-                  value={teamFilter}
-                  onChange={(e) => setTeamFilter(e.target.value)}
-                  className="h-10 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition focus:border-zinc-900"
-                >
-                  <option value="all">All teams</option>
-                  {teamOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </div>
           </div>
 
           <div className="space-y-3">
-            {filteredRows.map((row) => {
-              const customer = row.customer_name || row.customer || "-";
-              const phone = row.customer_phone || row.phone || "-";
-              const install = row.installation_date || row.install_date || "-";
-              const saleDate = row.created_at
-                ? new Date(row.created_at).toLocaleDateString()
+            {deals.map((deal) => {
+              const customer = deal.customer_name || deal.customer || "-";
+              const phone = deal.customer_phone || deal.phone || "-";
+              const install = deal.installation_date || deal.install_date || "-";
+              const saleDate = deal.created_at
+                ? new Date(deal.created_at).toLocaleDateString()
                 : "-";
-              const agent = row.rep_name || row.rep_email || "-";
+              const agent =
+                deal.rep_name || deal.rep_email || deal.rep || deal.email || "-";
 
               return (
                 <div
-                  key={row.id}
+                  key={deal.id}
                   className="rounded-3xl border border-white/10 bg-white p-3 text-black shadow-sm sm:p-4"
                 >
-                  <div className="flex flex-col gap-3 lg:flex-row lg:items-stretch lg:justify-between">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0 flex-1">
                       <div className="grid grid-cols-3 gap-x-3 gap-y-2 text-sm">
-                        <CompactItem label="Team" value={row.team || "-"} />
-                        <CompactItem label="ISP" value={row.isp || "-"} />
+                        <CompactItem label="Team" value={deal.team || "-"} />
+                        <CompactItem label="ISP" value={deal.isp || "-"} />
                         <CompactItem label="Agent" value={agent} />
                       </div>
 
                       <div className="mt-2 grid grid-cols-3 gap-x-3 gap-y-2 text-sm">
                         <CompactItem label="Customer" value={customer} />
                         <CompactItem label="Phone" value={phone} />
-                        <CompactItem label="Email" value={row.customer_email || "-"} />
+                        <CompactItem label="Email" value={deal.customer_email || "-"} />
                       </div>
 
                       <div className="mt-2 grid grid-cols-3 gap-x-3 gap-y-2 text-sm">
-                        <CompactItem label="Package" value={row.package || "-"} />
-                        <CompactItem label="VAS" value={row.vas || "-"} />
-                        <CompactItem label="Voice" value={row.voice || "-"} />
+                        <CompactItem label="Package" value={deal.package || "-"} />
+                        <CompactItem label="VAS" value={deal.vas || "-"} />
+                        <CompactItem label="Voice" value={deal.voice || "-"} />
                       </div>
 
                       <div className="mt-2 grid grid-cols-3 gap-x-3 gap-y-2 text-sm">
                         <CompactItem label="Sale Date" value={saleDate} />
                         <CompactItem label="Install Date" value={install} />
-                        <CompactItem label="Order #" value={row.order_number || "-"} />
+                        <CompactItem label="Order #" value={deal.order_number || "-"} />
                       </div>
                     </div>
 
-                    <div className="lg:w-[280px] lg:pl-4">
-                      <div className="mb-2 flex lg:justify-end">
-                        <StatusPill status={row.status || "pending"} />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2 h-full content-start">
-                        <ActionButton
-                          label="Pending"
-                          onClick={() => updateStatus(row.id, "pending")}
-                          variant="light"
-                        />
-                        <ActionButton
-                          label="Approve"
-                          onClick={() => updateStatus(row.id, "approved")}
-                          variant="green"
-                        />
-                        <ActionButton
-                          label="Installed"
-                          onClick={() => updateStatus(row.id, "installed")}
-                          variant="blue"
-                        />
-                        <ActionButton
-                          label="Chargeback"
-                          onClick={() => updateStatus(row.id, "chargeback")}
-                          variant="red"
-                        />
+                    <div className="lg:w-[220px] lg:pl-4">
+                      <div className="flex lg:justify-end">
+                        <StatusPill status={deal.status || "pending"} />
                       </div>
                     </div>
                   </div>
@@ -377,29 +197,14 @@ export default function AdminDealsPage() {
               );
             })}
 
-            {filteredRows.length === 0 && (
+            {deals.length === 0 && (
               <div className="rounded-3xl border border-white/10 bg-white px-4 py-8 text-center text-sm text-zinc-500 shadow-sm">
-                No deals found.
+                No team deals yet.
               </div>
             )}
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <label className="mb-1 block text-xs font-medium text-zinc-700">{label}</label>
-      {children}
     </div>
   );
 }
@@ -417,7 +222,13 @@ function StatCard({ label, value }: { label: string; value: number }) {
   );
 }
 
-function CompactItem({ label, value }: { label: string; value: string }) {
+function CompactItem({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
   return (
     <div className="min-w-0">
       <div className="truncate text-[10px] font-medium uppercase tracking-wide text-zinc-500 sm:text-[11px]">
@@ -461,33 +272,5 @@ function StatusPill({ status }: { status: string }) {
     <span className="inline-flex rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-700">
       Pending
     </span>
-  );
-}
-
-function ActionButton({
-  label,
-  onClick,
-  variant,
-}: {
-  label: string;
-  onClick: () => void;
-  variant: "light" | "green" | "blue" | "red";
-}) {
-  const styles =
-    variant === "green"
-      ? "bg-emerald-600 text-white hover:bg-emerald-700"
-      : variant === "blue"
-      ? "bg-blue-600 text-white hover:bg-blue-700"
-      : variant === "red"
-      ? "bg-red-600 text-white hover:bg-red-700"
-      : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200";
-
-  return (
-    <button
-      onClick={onClick}
-      className={`h-12 rounded-2xl px-3 text-sm font-semibold transition flex items-center justify-center ${styles}`}
-    >
-      {label}
-    </button>
   );
 }
