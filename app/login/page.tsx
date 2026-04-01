@@ -13,21 +13,79 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  async function routeUserAfterLogin(userEmail: string) {
+    const cleanEmail = userEmail.trim().toLowerCase();
+
+    const { data: onboarding } = await supabase
+      .from("onboarding_forms")
+      .select("*")
+      .eq("email", cleanEmail)
+      .maybeSingle();
+
+    const onboardingComplete =
+      !!onboarding &&
+      !!onboarding.full_name &&
+      !!onboarding.phone &&
+      !!onboarding.onboarding_coordinator &&
+      !!onboarding.team_name &&
+      !!onboarding.isp &&
+      !!onboarding.street_address &&
+      !!onboarding.city &&
+      !!onboarding.state &&
+      !!onboarding.zip_code &&
+      !!onboarding.country &&
+      !!onboarding.shirt_size &&
+      !!onboarding.bank_name &&
+      !!onboarding.routing_number &&
+      !!onboarding.account_number &&
+      !!onboarding.date_of_birth &&
+      !!onboarding.ssn &&
+      !!onboarding.signature;
+
+    if (!onboardingComplete) {
+      router.push("/onboarding");
+      return;
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("email", cleanEmail)
+      .maybeSingle();
+
+    const role = profile?.role || "";
+
+    if (role === "admin" || role === "assistant_admin") {
+      router.push("/admin-deals");
+      return;
+    }
+
+    if (role === "team_leader") {
+      router.push("/team-dashboard");
+      return;
+    }
+
+    router.push("/rep-dashboard");
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
+    const cleanEmail = email.trim().toLowerCase();
+
     const { error } = await supabase.auth.signInWithPassword({
-      email,
+      email: cleanEmail,
       password,
     });
 
     if (error) {
       alert(error.message);
-    } else {
-      router.push("/rep-dashboard");
+      setLoading(false);
+      return;
     }
 
+    await routeUserAfterLogin(cleanEmail);
     setLoading(false);
   };
 
@@ -82,7 +140,7 @@ export default function LoginPage() {
         </form>
 
         <p className="mt-6 text-center text-sm text-zinc-400">
-          Don’t have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link href="/signup" className="font-medium text-blue-400 underline">
             Sign up
           </Link>

@@ -166,7 +166,7 @@ function getLinks(role: string) {
       { label: "Submit Deal", href: "/deals" },
       { label: "Admin Deals", href: "/admin-deals" },
       { label: "Role Manager", href: "/role-manager" },
-      { label: "Onboarding", href: "/admin" },
+      { label: "Onboarding Review", href: "/admin" },
     ];
   }
 
