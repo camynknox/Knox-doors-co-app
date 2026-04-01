@@ -34,7 +34,7 @@ export default function Page() {
 
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("full_name, name, role")
+      .select("full_name, role")
       .eq("email", cleanEmail)
       .maybeSingle();
 
@@ -56,7 +56,7 @@ export default function Page() {
       return;
     }
 
-    setRepName(profile?.full_name || profile?.name || "");
+    setRepName(profile?.full_name || "");
 
     const { data: onboarding, error: onboardingError } = await supabase
       .from("onboarding_forms")
