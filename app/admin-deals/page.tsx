@@ -5,23 +5,53 @@ import { useRouter } from "next/navigation";
 import TopNav from "@/app/components/top-nav";
 import { supabase } from "@/app/lib/supabase";
 
-const STATUS_OPTIONS = ["all", "pending", "approved", "installed", "chargeback"];
-const UPDATE_OPTIONS = ["pending", "approved", "installed", "chargeback"];
+const ISP_OPTIONS = [
+  "Brightspeed",
+  "Vyve",
+  "Zito",
+  "Point Broadband",
+  "Clearwave",
+  "Kinetic",
+  "T Fiber",
+  "Ripple",
+  "Frontier",
+  "Xfinity",
+  "MaxxSouth",
+  "Loop",
+  "Sparklight",
+];
 
-export default function Page() {
+type DealRow = {
+  id: string;
+  team?: string | null;
+  customer?: string | null;
+  customer_email?: string | null;
+  phone?: string | null;
+  isp?: string | null;
+  package?: string | null;
+  vas?: string | null;
+  voice?: string | null;
+  tv?: string | null;
+  address?: string | null;
+  order_number?: string | null;
+  install_date?: string | null;
+  status?: string | null;
+  created_at?: string | null;
+};
+
+export default function AdminDealsPage() {
   const router = useRouter();
 
   const [authorized, setAuthorized] = useState(false);
   const [checking, setChecking] = useState(true);
-
-  const [deals, setDeals] = useState<any[]>([]);
-  const [profiles, setProfiles] = useState<any[]>([]);
+  const [rows, setRows] = useState<DealRow[]>([]);
   const [message, setMessage] = useState("Checking access...");
+  const [loadingRows, setLoadingRows] = useState(false);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [ispFilter, setIspFilter] = useState("all");
   const [teamFilter, setTeamFilter] = useState("all");
-  const [repFilter, setRepFilter] = useState("all");
 
   useEffect(() => {
     init();
@@ -42,7 +72,7 @@ export default function Page() {
       .from("profiles")
       .select("role")
       .eq("email", user.email)
-      .maybeSingle();
+      .single();
 
     if (profileError || !profile?.role) {
       setChecking(false);
@@ -55,7 +85,7 @@ export default function Page() {
     if (role === "admin" || role === "assistant_admin") {
       setAuthorized(true);
       setChecking(false);
-      await Promise.all([fetchDeals(), fetchProfiles()]);
+      fetchRows();
       return;
     }
 
@@ -72,165 +102,108 @@ export default function Page() {
     router.push("/login");
   }
 
-  async function fetchDeals() {
-    setMessage("Loading deals...");
+  async function fetchRows() {
+    setLoadingRows(true);
 
     const { data, error } = await supabase
       .from("deals")
       .select("*")
       .order("created_at", { ascending: false });
 
+    setLoadingRows(false);
+
     if (error) {
       setMessage(error.message);
       return;
     }
 
-    const list = data || [];
-    setDeals(list);
+    const list = (data || []) as DealRow[];
+    setRows(list);
     setMessage(`Loaded ${list.length} deal(s).`);
   }
 
-  async function fetchProfiles() {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("email, full_name, name");
+  async function updateStatus(id: string, status: string) {
+    const previousRows = rows;
 
-    if (error) {
-      return;
-    }
+    setRows((prev) =>
+      prev.map((row) => (row.id === id ? { ...row, status } : row))
+    );
+    setMessage(`Updating status to ${status}...`);
 
-    setProfiles(data || []);
-  }
-
-  async function updateStatus(id: string, newStatus: string) {
     const { error } = await supabase
       .from("deals")
-      .update({ status: newStatus })
+      .update({ status })
       .eq("id", id);
 
     if (error) {
-      setMessage("Update error: " + error.message);
+      setRows(previousRows);
+      setMessage(error.message);
       return;
     }
 
-    setDeals((prev) =>
-      prev.map((deal) =>
-        deal.id === id ? { ...deal, status: newStatus } : deal
-      )
-    );
-
-    setMessage(`Status updated to ${newStatus}.`);
-  }
-
-  function getProfileNameByEmail(email: string) {
-    const cleanEmail = String(email || "").trim().toLowerCase();
-    if (!cleanEmail) return "";
-
-    const match = profiles.find(
-      (p) => String(p.email || "").trim().toLowerCase() === cleanEmail
-    );
-
-    return String(match?.full_name || match?.name || "").trim();
-  }
-
-  function getRepDisplay(deal: any) {
-    const repName = String(deal.rep_name || "").trim();
-    if (repName) return repName;
-
-    const repEmail = String(deal.rep_email || deal.email || "").trim().toLowerCase();
-    const profileName = getProfileNameByEmail(repEmail);
-    if (profileName) return profileName;
-
-    const repFallback = String(deal.rep || "").trim();
-    if (repFallback && !repFallback.includes("@")) return repFallback;
-
-    return repEmail || "-";
+    setMessage(`Status updated to ${status}.`);
   }
 
   const teamOptions = useMemo(() => {
-    const values = Array.from(
-      new Set(
-        deals
-          .map((d) => String(d.team || "").trim())
-          .filter(Boolean)
-      )
-    ).sort((a, b) => a.localeCompare(b));
+    return Array.from(new Set(rows.map((row) => row.team).filter(Boolean))) as string[];
+  }, [rows]);
 
-    return ["all", ...values];
-  }, [deals]);
-
-  const repOptions = useMemo(() => {
-    const values = Array.from(
-      new Set(
-        deals
-          .map((d) => getRepDisplay(d))
-          .filter((v) => v && v !== "-" && !v.includes("@"))
-      )
-    ).sort((a, b) => a.localeCompare(b));
-
-    return ["all", ...values];
-  }, [deals, profiles]);
-
-  const filteredDeals = useMemo(() => {
-    const term = search.toLowerCase().trim();
-
-    return deals.filter((deal) => {
-      const repDisplay = getRepDisplay(deal).toLowerCase();
-      const customer = String(deal.customer || "").toLowerCase();
-      const customerEmail = String(deal.customer_email || "").toLowerCase();
-      const phone = String(deal.phone || "").toLowerCase();
-      const isp = String(deal.isp || "").toLowerCase();
-      const packageName = String(deal.package || "").toLowerCase();
-      const address = String(deal.address || "").toLowerCase();
-      const team = String(deal.team || "").toLowerCase();
-      const status = String(deal.status || "").toLowerCase();
-      const vas = String(deal.vas || "").toLowerCase();
+  const filteredRows = useMemo(() => {
+    return rows.filter((row) => {
+      const q = search.trim().toLowerCase();
 
       const matchesSearch =
-        term === ""
+        q.length === 0
           ? true
-          : repDisplay.includes(term) ||
-            customer.includes(term) ||
-            customerEmail.includes(term) ||
-            phone.includes(term) ||
-            isp.includes(term) ||
-            packageName.includes(term) ||
-            address.includes(term) ||
-            team.includes(term) ||
-            vas.includes(term);
+          : [
+              row.team,
+              row.customer,
+              row.customer_email,
+              row.phone,
+              row.isp,
+              row.package,
+              row.vas,
+              row.address,
+              row.order_number,
+            ]
+              .filter(Boolean)
+              .some((value) => String(value).toLowerCase().includes(q));
 
+      const rowStatus = (row.status || "pending").toLowerCase();
       const matchesStatus =
-        statusFilter === "all" ? true : status === statusFilter;
+        statusFilter === "all" ? true : rowStatus === statusFilter;
+
+      const matchesIsp =
+        ispFilter === "all" ? true : (row.isp || "") === ispFilter;
 
       const matchesTeam =
-        teamFilter === "all"
-          ? true
-          : String(deal.team || "").trim() === teamFilter;
+        teamFilter === "all" ? true : (row.team || "") === teamFilter;
 
-      const matchesRep =
-        repFilter === "all"
-          ? true
-          : getRepDisplay(deal) === repFilter;
-
-      return matchesSearch && matchesStatus && matchesTeam && matchesRep;
+      return matchesSearch && matchesStatus && matchesIsp && matchesTeam;
     });
-  }, [deals, search, statusFilter, teamFilter, repFilter, profiles]);
+  }, [rows, search, statusFilter, ispFilter, teamFilter]);
 
   const stats = useMemo(() => {
     return {
-      total: deals.length,
-      pending: deals.filter((d) => d.status === "pending").length,
-      approved: deals.filter((d) => d.status === "approved").length,
-      installed: deals.filter((d) => d.status === "installed").length,
-      chargeback: deals.filter((d) => d.status === "chargeback").length,
+      total: rows.length,
+      pending: rows.filter((row) => (row.status || "pending") === "pending").length,
+      approved: rows.filter((row) => row.status === "approved").length,
+      installed: rows.filter((row) => row.status === "installed").length,
+      chargebacks: rows.filter((row) => row.status === "chargeback").length,
     };
-  }, [deals]);
+  }, [rows]);
 
   if (checking) {
     return (
-      <div>
+      <div className="min-h-screen bg-black text-white">
         <TopNav />
-        <div style={{ padding: "24px", fontFamily: "system-ui" }}>{message}</div>
+        <div className="px-4 py-6">
+          <div className="mx-auto max-w-7xl">
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+              <div className="text-sm text-zinc-300">{message}</div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -238,301 +211,185 @@ export default function Page() {
   if (!authorized) return null;
 
   return (
-    <div>
+    <div className="min-h-screen bg-black text-white">
       <TopNav />
 
-      <div
-        style={{
-          padding: "24px",
-          marginTop: "10px",
-          fontFamily: "system-ui",
-        }}
-      >
-        <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "end",
-              gap: "16px",
-              flexWrap: "wrap",
-              marginBottom: "20px",
-            }}
-          >
+      <div className="px-4 py-6 sm:px-6">
+        <div className="mx-auto max-w-7xl space-y-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <h1
-                style={{
-                  fontSize: "34px",
-                  fontWeight: 700,
-                  margin: 0,
-                  marginBottom: "6px",
-                }}
-              >
-                Admin Deals
-              </h1>
-              <div style={{ fontSize: "14px", color: "#64748b" }}>
+              <h1 className="text-4xl font-bold tracking-tight">Admin Deals</h1>
+              <p className="mt-2 text-base text-zinc-400">
                 Review submissions, filter the pipeline, and update statuses fast.
-              </div>
+              </p>
             </div>
 
             <button
-              onClick={() => {
-                fetchDeals();
-                fetchProfiles();
-              }}
-              style={{
-                padding: "12px 16px",
-                borderRadius: "12px",
-                border: "1px solid #d1d5db",
-                background: "white",
-                fontSize: "14px",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
+              type="button"
+              onClick={fetchRows}
+              className="h-12 rounded-2xl bg-white px-5 text-sm font-semibold text-black transition hover:bg-zinc-200"
             >
-              Refresh
+              {loadingRows ? "Refreshing..." : "Refresh"}
             </button>
           </div>
 
-          <div
-            style={{
-              marginBottom: "16px",
-              fontSize: "14px",
-              padding: "12px 14px",
-              borderRadius: "12px",
-              background: "#f8fafc",
-              border: "1px solid #e5e7eb",
-              color: "#334155",
-            }}
-          >
+          <div className="rounded-2xl border border-white/10 bg-white/90 px-4 py-3 text-sm text-slate-700">
             {message}
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
-              gap: "14px",
-              marginBottom: "18px",
-            }}
-          >
+          <div className="grid grid-cols-2 gap-3 xl:grid-cols-5">
             <StatCard label="Total Deals" value={stats.total} />
             <StatCard label="Pending" value={stats.pending} />
             <StatCard label="Approved" value={stats.approved} />
             <StatCard label="Installed" value={stats.installed} />
-            <StatCard label="Chargebacks" value={stats.chargeback} />
+            <StatCard label="Chargebacks" value={stats.chargebacks} />
           </div>
 
-          <div
-            style={{
-              background: "white",
-              border: "1px solid #e5e7eb",
-              borderRadius: "18px",
-              padding: "18px",
-              boxShadow: "0 4px 14px rgba(0,0,0,0.04)",
-              marginBottom: "16px",
-            }}
-          >
-            <div
-              style={{
-                fontSize: "16px",
-                fontWeight: 600,
-                marginBottom: "14px",
-                color: "#111827",
-              }}
-            >
-              Filters
-            </div>
+          <div className="rounded-3xl border border-white/10 bg-white p-5 text-black shadow-sm">
+            <h2 className="text-2xl font-semibold">Filters</h2>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "2fr 1fr 1fr 1fr",
-                gap: "12px",
-              }}
-            >
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search rep, customer, phone, ISP, package, address..."
-                style={inputStyle}
-              />
+            <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-12">
+              <div className="lg:col-span-5">
+                <label className="mb-1.5 block text-sm font-medium text-zinc-700">
+                  Search
+                </label>
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Customer, email, phone, order #, address..."
+                  className="h-12 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-500 focus:border-zinc-900"
+                />
+              </div>
 
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                style={inputStyle}
-              >
-                {STATUS_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {prettyStatus(option)}
-                  </option>
-                ))}
-              </select>
+              <div className="lg:col-span-2">
+                <label className="mb-1.5 block text-sm font-medium text-zinc-700">
+                  Status
+                </label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="h-12 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition focus:border-zinc-900"
+                >
+                  <option value="all">All statuses</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="installed">Installed</option>
+                  <option value="chargeback">Chargebacks</option>
+                </select>
+              </div>
 
-              <select
-                value={teamFilter}
-                onChange={(e) => setTeamFilter(e.target.value)}
-                style={inputStyle}
-              >
-                {teamOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option === "all" ? "All Teams" : option}
-                  </option>
-                ))}
-              </select>
+              <div className="lg:col-span-2">
+                <label className="mb-1.5 block text-sm font-medium text-zinc-700">
+                  ISP
+                </label>
+                <select
+                  value={ispFilter}
+                  onChange={(e) => setIspFilter(e.target.value)}
+                  className="h-12 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition focus:border-zinc-900"
+                >
+                  <option value="all">All ISPs</option>
+                  {ISP_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-              <select
-                value={repFilter}
-                onChange={(e) => setRepFilter(e.target.value)}
-                style={inputStyle}
-              >
-                {repOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option === "all" ? "All Reps" : option}
-                  </option>
-                ))}
-              </select>
+              <div className="lg:col-span-3">
+                <label className="mb-1.5 block text-sm font-medium text-zinc-700">
+                  Team
+                </label>
+                <select
+                  value={teamFilter}
+                  onChange={(e) => setTeamFilter(e.target.value)}
+                  className="h-12 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition focus:border-zinc-900"
+                >
+                  <option value="all">All teams</option>
+                  {teamOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
-          <div
-            style={{
-              background: "white",
-              border: "1px solid #e5e7eb",
-              borderRadius: "18px",
-              overflow: "hidden",
-              boxShadow: "0 4px 14px rgba(0,0,0,0.04)",
-            }}
-          >
-            <div
-              style={{
-                padding: "18px 20px",
-                borderBottom: "1px solid #e5e7eb",
-                fontSize: "16px",
-                fontWeight: 600,
-              }}
-            >
-              Pipeline
+          <div className="overflow-hidden rounded-3xl border border-white/10 bg-white text-black shadow-sm">
+            <div className="border-b border-zinc-200 px-5 py-4">
+              <h2 className="text-lg font-semibold">Deals</h2>
             </div>
 
-            <div style={{ overflowX: "auto" }}>
-              <table
-                style={{
-                  width: "100%",
-                  minWidth: "1500px",
-                  borderCollapse: "collapse",
-                  fontSize: "14px",
-                }}
-              >
-                <thead>
-                  <tr
-                    style={{
-                      textAlign: "left",
-                      background: "#f8fafc",
-                      borderBottom: "1px solid #e5e7eb",
-                    }}
-                  >
-                    <th style={th}>Rep</th>
-                    <th style={th}>Team</th>
-                    <th style={th}>Customer</th>
-                    <th style={th}>Customer Email</th>
-                    <th style={th}>Phone</th>
-                    <th style={th}>ISP</th>
-                    <th style={th}>Package</th>
-                    <th style={th}>VAS</th>
-                    <th style={th}>Voice / TV</th>
-                    <th style={th}>Address</th>
-                    <th style={th}>Order #</th>
-                    <th style={th}>Install</th>
-                    <th style={th}>Status</th>
-                    <th style={th}>Update</th>
+            <div className="overflow-x-auto">
+              <table className="min-w-[1450px] w-full border-collapse text-sm">
+                <thead className="bg-zinc-50">
+                  <tr className="border-b border-zinc-200 text-left">
+                    <th className="px-4 py-4 font-semibold text-zinc-700">Team</th>
+                    <th className="px-4 py-4 font-semibold text-zinc-700">Customer</th>
+                    <th className="px-4 py-4 font-semibold text-zinc-700">Customer Email</th>
+                    <th className="px-4 py-4 font-semibold text-zinc-700">Phone</th>
+                    <th className="px-4 py-4 font-semibold text-zinc-700">ISP</th>
+                    <th className="px-4 py-4 font-semibold text-zinc-700">Package</th>
+                    <th className="px-4 py-4 font-semibold text-zinc-700">VAS</th>
+                    <th className="px-4 py-4 font-semibold text-zinc-700">Voice / TV</th>
+                    <th className="px-4 py-4 font-semibold text-zinc-700">Address</th>
+                    <th className="px-4 py-4 font-semibold text-zinc-700">Order #</th>
+                    <th className="px-4 py-4 font-semibold text-zinc-700">Install</th>
+                    <th className="px-4 py-4 font-semibold text-zinc-700">Status</th>
+                    <th className="px-4 py-4 font-semibold text-zinc-700">Actions</th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {filteredDeals.map((deal) => (
-                    <tr key={deal.id} style={rowStyle}>
-                      <td style={tdStrong}>{getRepDisplay(deal)}</td>
-
-                      <td style={td}>
-                        <span style={teamPill()}>{deal.team || "-"}</span>
+                  {filteredRows.map((row) => (
+                    <tr key={row.id} className="border-b border-zinc-100 align-top">
+                      <td className="px-4 py-4 text-zinc-800">{row.team || "-"}</td>
+                      <td className="px-4 py-4 font-medium text-zinc-950">{row.customer || "-"}</td>
+                      <td className="px-4 py-4 text-zinc-700">{row.customer_email || "-"}</td>
+                      <td className="px-4 py-4 text-zinc-700">{row.phone || "-"}</td>
+                      <td className="px-4 py-4 text-zinc-700">{row.isp || "-"}</td>
+                      <td className="px-4 py-4 text-zinc-700">{row.package || "-"}</td>
+                      <td className="px-4 py-4 text-zinc-700">{row.vas || "-"}</td>
+                      <td className="px-4 py-4 text-zinc-700">
+                        {row.voice || "-"} / {row.tv || "-"}
                       </td>
-
-                      <td style={td}>{deal.customer || "-"}</td>
-                      <td style={td}>{deal.customer_email || "-"}</td>
-                      <td style={td}>{deal.phone || "-"}</td>
-                      <td style={td}>{deal.isp || "-"}</td>
-                      <td style={td}>{deal.package || "-"}</td>
-
-                      <td style={td}>
-                        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                          {formatVas(deal.vas).length > 0 ? (
-                            formatVas(deal.vas).map((item) => (
-                              <span key={item} style={miniPill("#f3f4f6", "#374151")}>
-                                {item}
-                              </span>
-                            ))
-                          ) : (
-                            "-"
-                          )}
+                      <td className="px-4 py-4 text-zinc-700">{row.address || "-"}</td>
+                      <td className="px-4 py-4 text-zinc-700">{row.order_number || "-"}</td>
+                      <td className="px-4 py-4 text-zinc-700">{row.install_date || "-"}</td>
+                      <td className="px-4 py-4">
+                        <StatusPill status={row.status || "pending"} />
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex flex-wrap gap-2">
+                          <ActionButton
+                            label="Pending"
+                            onClick={() => updateStatus(row.id, "pending")}
+                            variant="light"
+                          />
+                          <ActionButton
+                            label="Approve"
+                            onClick={() => updateStatus(row.id, "approved")}
+                            variant="green"
+                          />
+                          <ActionButton
+                            label="Installed"
+                            onClick={() => updateStatus(row.id, "installed")}
+                            variant="blue"
+                          />
+                          <ActionButton
+                            label="Chargeback"
+                            onClick={() => updateStatus(row.id, "chargeback")}
+                            variant="red"
+                          />
                         </div>
-                      </td>
-
-                      <td style={td}>
-                        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                          <span style={miniPill("#eef2ff", "#3730a3")}>
-                            Voice: {extractVoice(deal)}
-                          </span>
-                          <span style={miniPill("#fdf2f8", "#9d174d")}>
-                            TV: {extractTv(deal)}
-                          </span>
-                        </div>
-                      </td>
-
-                      <td style={td}>{deal.address || "-"}</td>
-                      <td style={td}>{deal.order_number || "-"}</td>
-                      <td style={td}>{deal.install_date || "-"}</td>
-
-                      <td style={td}>
-                        <span style={statusPill(deal.status)}>
-                          {prettyStatus(deal.status)}
-                        </span>
-                      </td>
-
-                      <td style={td}>
-                        <select
-                          value={deal.status || "pending"}
-                          onChange={(e) => updateStatus(deal.id, e.target.value)}
-                          style={{
-                            padding: "10px 12px",
-                            border: "1px solid #d1d5db",
-                            borderRadius: "10px",
-                            background: "white",
-                            fontSize: "13px",
-                            minWidth: "130px",
-                          }}
-                        >
-                          {UPDATE_OPTIONS.map((option) => (
-                            <option key={option} value={option}>
-                              {prettyStatus(option)}
-                            </option>
-                          ))}
-                        </select>
                       </td>
                     </tr>
                   ))}
 
-                  {filteredDeals.length === 0 && (
+                  {filteredRows.length === 0 && (
                     <tr>
-                      <td
-                        colSpan={14}
-                        style={{
-                          padding: "28px",
-                          textAlign: "center",
-                          color: "#64748b",
-                        }}
-                      >
+                      <td colSpan={13} className="px-4 py-10 text-center text-sm text-zinc-500">
                         No deals found.
                       </td>
                     </tr>
@@ -549,111 +406,71 @@ export default function Page() {
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div
-      style={{
-        background: "white",
-        border: "1px solid #e5e7eb",
-        borderRadius: "16px",
-        padding: "18px",
-        boxShadow: "0 4px 14px rgba(0,0,0,0.04)",
-      }}
-    >
-      <div style={{ fontSize: "13px", color: "#64748b", marginBottom: "8px" }}>
-        {label}
-      </div>
-      <div style={{ fontSize: "30px", fontWeight: 700, color: "#111827" }}>
-        {value}
-      </div>
+    <div className="rounded-3xl bg-white p-6 text-black shadow-sm">
+      <div className="text-sm font-medium text-slate-500">{label}</div>
+      <div className="mt-4 text-4xl font-bold leading-none">{value}</div>
     </div>
   );
 }
 
-function prettyStatus(value: string) {
-  if (value === "all") return "All Statuses";
-  if (value === "chargeback") return "Chargeback";
-  if (!value) return "-";
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
+function StatusPill({ status }: { status: string }) {
+  const normalized = status.toLowerCase();
 
-function formatVas(value: string) {
-  if (!value) return [];
-  return value
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
-function extractVoice(deal: any) {
-  if (deal.voice && String(deal.voice).includes("Voice:")) {
-    const match = String(deal.voice).match(/Voice:\s*([^,]+)/i);
-    return match ? match[1].trim() : "-";
+  if (normalized === "approved") {
+    return (
+      <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+        Approved
+      </span>
+    );
   }
 
-  if (deal.voice) return String(deal.voice);
-  return "No";
-}
-
-function extractTv(deal: any) {
-  if (deal.tv) return String(deal.tv);
-
-  if (deal.voice && String(deal.voice).includes("TV:")) {
-    const match = String(deal.voice).match(/TV:\s*([^,]+)/i);
-    return match ? match[1].trim() : "No";
+  if (normalized === "installed") {
+    return (
+      <span className="inline-flex rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-700">
+        Installed
+      </span>
+    );
   }
 
-  return "No";
+  if (normalized === "chargeback") {
+    return (
+      <span className="inline-flex rounded-full bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-700">
+        Chargeback
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-700">
+      Pending
+    </span>
+  );
 }
 
-function statusPill(status: string) {
-  if (status === "approved") return miniPill("#dcfce7", "#166534");
-  if (status === "installed") return miniPill("#dbeafe", "#1d4ed8");
-  if (status === "chargeback") return miniPill("#fee2e2", "#b91c1c");
-  return miniPill("#f3f4f6", "#374151");
+function ActionButton({
+  label,
+  onClick,
+  variant,
+}: {
+  label: string;
+  onClick: () => void;
+  variant: "light" | "green" | "blue" | "red";
+}) {
+  const styles =
+    variant === "green"
+      ? "bg-emerald-600 text-white hover:bg-emerald-700"
+      : variant === "blue"
+      ? "bg-blue-600 text-white hover:bg-blue-700"
+      : variant === "red"
+      ? "bg-red-600 text-white hover:bg-red-700"
+      : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200";
+
+  return (
+    <button
+      onClick={onClick}
+      className={`rounded-xl px-3 py-2 text-xs font-semibold transition whitespace-nowrap ${styles}`}
+    >
+      {label}
+    </button>
+  );
 }
-
-function teamPill() {
-  return miniPill("#f8fafc", "#334155");
-}
-
-function miniPill(bg: string, color: string) {
-  return {
-    padding: "5px 10px",
-    borderRadius: "999px",
-    fontSize: "12px",
-    background: bg,
-    color,
-    whiteSpace: "nowrap" as const,
-  };
-}
-
-const inputStyle = {
-  padding: "12px 14px",
-  borderRadius: "12px",
-  border: "1px solid #d1d5db",
-  fontSize: "14px",
-  outline: "none",
-  background: "white",
-};
-
-const th = {
-  padding: "14px 16px",
-  fontWeight: 600,
-  color: "#374151",
-};
-
-const td = {
-  padding: "14px 16px",
-  color: "#111827",
-  verticalAlign: "top" as const,
-};
-
-const tdStrong = {
-  padding: "14px 16px",
-  color: "#111827",
-  verticalAlign: "top" as const,
-  fontWeight: 600,
-};
-
-const rowStyle = {
-  borderBottom: "1px solid #f1f5f9",
-};
