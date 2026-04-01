@@ -474,15 +474,18 @@ export default function RoleManagerPage() {
 }
 
 function prettyRole(role: string) {
-  if (role === "team_leader") return "Team Leader";
-  if (role === "assistant_admin") return "Assistant Admin";
-  if (role === "admin") return "Admin";
+  if (role === "team_leader") return "Leader";
+  if (role === "assistant_admin") return "Admin";
+  if (role === "admin") return "Owner";
   return "Rep";
 }
 
 function prettyFilter(role: string) {
   if (role === "all") return "All";
-  return prettyRole(role);
+  if (role === "team_leader") return "Leader";
+  if (role === "assistant_admin") return "Admin";
+  if (role === "admin") return "Owner";
+  return "Rep";
 }
 
 function RolePill({ role }: { role: string }) {
