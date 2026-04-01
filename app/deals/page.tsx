@@ -40,13 +40,14 @@ const VAS_OPTIONS = [
 const YES_NO_OPTIONS = ["Yes", "No"];
 
 type ProfileLike = {
+  id?: string | null;
+  user_id?: string | null;
   full_name?: string | null;
   name?: string | null;
   email?: string | null;
   team?: string | null;
   isp?: string | null;
   nsp?: string | null;
-  role?: string | null;
 };
 
 export default function DealsPage() {
@@ -57,14 +58,15 @@ export default function DealsPage() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
 
+  const [userId, setUserId] = useState("");
   const [repEmail, setRepEmail] = useState("");
   const [repName, setRepName] = useState("");
   const [team, setTeam] = useState("");
   const [profileLoaded, setProfileLoaded] = useState(false);
 
-  const [customer, setCustomer] = useState("");
+  const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
   const [address, setAddress] = useState("");
 
   const [isp, setIsp] = useState("");
@@ -75,7 +77,7 @@ export default function DealsPage() {
   const [tv, setTv] = useState("");
 
   const [orderNumber, setOrderNumber] = useState("");
-  const [installDate, setInstallDate] = useState("");
+  const [installationDate, setInstallationDate] = useState("");
 
   useEffect(() => {
     loadPage();
@@ -96,25 +98,21 @@ export default function DealsPage() {
         return;
       }
 
-      const userEmail = user.email || "";
-      setRepEmail(userEmail);
+      const email = user.email || "";
+      setUserId(user.id);
+      setRepEmail(email);
 
-      const profile = await loadProfile(user.id, userEmail);
+      const profile = await loadProfile(user.id, email);
 
       const resolvedName =
         profile?.full_name?.trim() ||
         profile?.name?.trim() ||
         user.user_metadata?.full_name?.trim() ||
         user.user_metadata?.name?.trim() ||
-        (userEmail ? userEmail.split("@")[0] : "");
+        (email ? email.split("@")[0] : "");
 
-      const resolvedTeam =
-        profile?.team?.trim() || "";
-
-      const resolvedIsp =
-        profile?.isp?.trim() ||
-        profile?.nsp?.trim() ||
-        "";
+      const resolvedTeam = profile?.team?.trim() || "";
+      const resolvedIsp = profile?.isp?.trim() || profile?.nsp?.trim() || "";
 
       setRepName(resolvedName);
       setTeam(resolvedTeam);
@@ -133,28 +131,16 @@ export default function DealsPage() {
   }
 
   async function loadProfile(userId: string, email: string): Promise<ProfileLike | null> {
-    const tries = [
+    const attempts = [
       async () =>
-        supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", userId)
-          .maybeSingle(),
+        supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
       async () =>
-        supabase
-          .from("profiles")
-          .select("*")
-          .eq("user_id", userId)
-          .maybeSingle(),
+        supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
       async () =>
-        supabase
-          .from("profiles")
-          .select("*")
-          .eq("email", email)
-          .maybeSingle(),
+        supabase.from("profiles").select("*").eq("email", email).maybeSingle(),
     ];
 
-    for (const attempt of tries) {
+    for (const attempt of attempts) {
       const { data, error } = await attempt();
       if (!error && data) return data as ProfileLike;
     }
@@ -170,21 +156,26 @@ export default function DealsPage() {
     const vasValue = vasSelections.join(", ");
 
     const payload = {
-      customer,
-      customer_email: customerEmail || null,
-      phone,
-      address,
-      isp,
-      package: packageName,
+      rep_name: repName || null,
+      rep_email: repEmail || null,
+      email: repEmail || null,
+      user_id: userId || null,
+      team: team || null,
+
+      isp: isp || null,
+      package: packageName || null,
       vas: vasValue || null,
       voice: voice || null,
       tv: tv || null,
+
+      customer_name: customerName || null,
+      customer_email: customerEmail || null,
+      customer_phone: customerPhone || null,
+      address: address || null,
+
       order_number: orderNumber || null,
-      install_date: installDate || null,
+      installation_date: installationDate || null,
       status: "pending",
-      email: repEmail || null,
-      rep_name: repName || null,
-      team: team || null,
     };
 
     const { error } = await supabase.from("deals").insert([payload]);
@@ -200,16 +191,16 @@ export default function DealsPage() {
     setMessageType("success");
     setMessage("Deal submitted successfully");
 
-    setCustomer("");
+    setCustomerName("");
     setCustomerEmail("");
-    setPhone("");
+    setCustomerPhone("");
     setAddress("");
     setPackageName("");
     setVasSelections([]);
     setVoice("");
     setTv("");
     setOrderNumber("");
-    setInstallDate("");
+    setInstallationDate("");
 
     setTimeout(() => {
       router.push("/rep-dashboard");
@@ -288,8 +279,8 @@ export default function DealsPage() {
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <Input
                   label="Customer Name"
-                  value={customer}
-                  onChange={setCustomer}
+                  value={customerName}
+                  onChange={setCustomerName}
                   required
                   placeholder="Enter customer name"
                 />
@@ -302,8 +293,8 @@ export default function DealsPage() {
                 />
                 <Input
                   label="Phone"
-                  value={phone}
-                  onChange={setPhone}
+                  value={customerPhone}
+                  onChange={setCustomerPhone}
                   required
                   placeholder="Enter phone number"
                 />
@@ -397,8 +388,8 @@ export default function DealsPage() {
                 />
                 <DateInput
                   label="Install Date"
-                  value={installDate}
-                  onChange={setInstallDate}
+                  value={installationDate}
+                  onChange={setInstallationDate}
                   min={today}
                 />
               </div>
@@ -471,17 +462,15 @@ function Input({
   onChange,
   required = false,
   placeholder = "",
-  className = "",
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   required?: boolean;
   placeholder?: string;
-  className?: string;
 }) {
   return (
-    <div className={`flex flex-col gap-1.5 ${className}`}>
+    <div className="flex flex-col gap-1.5">
       <label className="text-sm font-medium text-zinc-800">{label}</label>
       <input
         value={value}
