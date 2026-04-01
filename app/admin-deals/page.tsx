@@ -165,7 +165,6 @@ export default function AdminDealsPage() {
               row.isp,
               row.package,
               row.vas,
-              row.address,
               row.order_number,
               row.rep_name,
               row.rep_email,
@@ -214,7 +213,7 @@ export default function AdminDealsPage() {
       <TopNav />
 
       <div className="px-4 py-4 sm:px-6 sm:py-5">
-        <div className="mx-auto max-w-7xl space-y-3 sm:space-y-4">
+        <div className="mx-auto max-w-7xl space-y-3">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Admin Deals</h1>
@@ -316,45 +315,36 @@ export default function AdminDealsPage() {
               return (
                 <div
                   key={row.id}
-                  className="rounded-3xl border border-white/10 bg-white p-4 text-black shadow-sm sm:p-5"
+                  className="rounded-3xl border border-white/10 bg-white p-3 text-black shadow-sm sm:p-4"
                 >
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0 flex-1">
-                      <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+                      <div className="grid grid-cols-3 gap-x-3 gap-y-2 text-sm">
                         <CompactItem label="Team" value={row.team || "-"} />
                         <CompactItem label="ISP" value={row.isp || "-"} />
                         <CompactItem label="Agent" value={agent} />
                       </div>
 
-                      <div className="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+                      <div className="mt-2 grid grid-cols-3 gap-x-3 gap-y-2 text-sm">
                         <CompactItem label="Customer" value={customer} />
                         <CompactItem label="Phone" value={phone} />
                         <CompactItem label="Email" value={row.customer_email || "-"} />
                       </div>
 
-                      <div className="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+                      <div className="mt-2 grid grid-cols-3 gap-x-3 gap-y-2 text-sm">
                         <CompactItem label="Package" value={row.package || "-"} />
                         <CompactItem label="VAS" value={row.vas || "-"} />
                         <CompactItem label="Voice" value={row.voice || "-"} />
                       </div>
 
-                      <div className="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+                      <div className="mt-2 grid grid-cols-3 gap-x-3 gap-y-2 text-sm">
                         <CompactItem label="Sale Date" value={saleDate} />
                         <CompactItem label="Install Date" value={install} />
                         <CompactItem label="Order #" value={row.order_number || "-"} />
                       </div>
-
-                      <div className="mt-3">
-                        <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
-                          Address
-                        </div>
-                        <div className="mt-1 text-sm text-zinc-900">
-                          {row.address || "-"}
-                        </div>
-                      </div>
                     </div>
 
-                    <div className="lg:w-[270px] lg:pl-4">
+                    <div className="lg:w-[260px] lg:pl-4">
                       <div className="mb-2 flex lg:justify-end">
                         <StatusPill status={row.status || "pending"} />
                       </div>
@@ -416,11 +406,11 @@ function Field({
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-2xl bg-white px-3 py-2.5 text-black shadow-sm">
-      <div className="text-[10px] font-medium uppercase tracking-wide text-slate-500 sm:text-[11px]">
+    <div className="rounded-2xl bg-white px-3 py-2 text-black shadow-sm">
+      <div className="truncate text-[10px] font-medium uppercase tracking-wide text-slate-500 sm:text-[11px]">
         {label}
       </div>
-      <div className="mt-1 text-2xl font-bold leading-none">{value}</div>
+      <div className="mt-1 text-xl font-bold leading-none sm:text-2xl">{value}</div>
     </div>
   );
 }
@@ -428,10 +418,10 @@ function StatCard({ label, value }: { label: string; value: number }) {
 function CompactItem({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+      <div className="truncate text-[10px] font-medium uppercase tracking-wide text-zinc-500 sm:text-[11px]">
         {label}
       </div>
-      <div className="mt-1 break-words text-sm font-medium text-zinc-900">
+      <div className="mt-0.5 break-words text-sm font-medium text-zinc-900">
         {value}
       </div>
     </div>
