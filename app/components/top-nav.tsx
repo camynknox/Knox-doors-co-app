@@ -71,7 +71,7 @@ export default function TopNav() {
     <div
       style={{
         borderBottom: "1px solid #e5e7eb",
-        padding: "20px 24px",
+        padding: "16px 14px",
         fontFamily: "system-ui",
         background: "white",
       }}
@@ -83,7 +83,7 @@ export default function TopNav() {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          gap: "16px",
+          gap: "14px",
         }}
       >
         <button
@@ -95,21 +95,24 @@ export default function TopNav() {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: "8px",
+            gap: "6px",
+            padding: 0,
           }}
         >
           <Image
             src="/logo2.png"
             alt="Knox Doors Co"
-            width={58}
-            height={58}
+            width={52}
+            height={52}
+            style={{ width: "52px", height: "52px" }}
           />
           <div
             style={{
-              fontSize: "14px",
-              letterSpacing: "6px",
+              fontSize: "11px",
+              letterSpacing: "5px",
               color: "#555",
               fontWeight: 600,
+              textAlign: "center",
             }}
           >
             KNOX DOORS CO
@@ -119,9 +122,11 @@ export default function TopNav() {
         <div
           style={{
             display: "flex",
-            gap: "10px",
+            gap: "8px",
             flexWrap: "wrap",
             justifyContent: "center",
+            width: "100%",
+            maxWidth: "760px",
           }}
         >
           <NavButton
@@ -183,15 +188,18 @@ function NavButton({
     <button
       onClick={onClick}
       style={{
-        padding: "12px 18px",
-        borderRadius: "16px",
+        padding: "10px 14px",
+        borderRadius: "14px",
         border: active ? "1px solid #111" : "1px solid #d1d5db",
         background: active ? "#111" : "white",
         color: active ? "white" : "#111",
-        fontSize: "14px",
-        fontWeight: 500,
+        fontSize: "13px",
+        fontWeight: 600,
         cursor: "pointer",
-        boxShadow: active ? "0 4px 12px rgba(0,0,0,0.08)" : "none",
+        boxShadow: active ? "0 4px 10px rgba(0,0,0,0.08)" : "none",
+        flexGrow: 1,
+        minWidth: "110px",
+        textAlign: "center",
       }}
     >
       {label}
