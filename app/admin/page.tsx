@@ -367,7 +367,7 @@ export default function AdminOnboardingPage() {
                       onClick={() =>
                         router.push(`/admin/${row.id}?table=${encodeURIComponent(tableName)}`)
                       }
-                      className="w-full rounded-xl bg-zinc-900 px-3 py-2.5 text-sm font-semibold text-white transition hover:opacity-95"
+                      className="w-full rounded-xl bg-blue-600 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
                     >
                       View Submission
                     </button>
@@ -401,7 +401,7 @@ export default function AdminOnboardingPage() {
                       <button
                         onClick={() => handleDeleteSubmission(row.id)}
                         disabled={deletingId === row.id}
-                        className="w-full rounded-xl bg-zinc-900 px-3 py-2.5 text-sm font-semibold text-white transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="w-full rounded-xl bg-red-600 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {deletingId === row.id ? "Deleting..." : "Delete Submission"}
                       </button>
@@ -466,7 +466,7 @@ export default function AdminOnboardingPage() {
                               onClick={() =>
                                 router.push(`/admin/${row.id}?table=${encodeURIComponent(tableName)}`)
                               }
-                              className="col-span-2 rounded-xl bg-zinc-900 px-3 py-2.5 text-xs font-semibold text-white transition hover:opacity-95"
+                              className="col-span-2 rounded-xl bg-blue-600 px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-blue-700"
                             >
                               View Submission
                             </button>
@@ -498,7 +498,7 @@ export default function AdminOnboardingPage() {
                               <button
                                 onClick={() => handleDeleteSubmission(row.id)}
                                 disabled={deletingId === row.id}
-                                className="col-span-2 rounded-xl bg-zinc-900 px-3 py-2.5 text-xs font-semibold text-white transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="col-span-2 rounded-xl bg-red-600 px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
                               >
                                 {deletingId === row.id ? "Deleting..." : "Delete Submission"}
                               </button>
