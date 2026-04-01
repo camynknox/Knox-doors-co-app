@@ -214,60 +214,54 @@ export default function AdminDealsPage() {
       <TopNav />
 
       <div className="px-4 py-4 sm:px-6 sm:py-5">
-        <div className="mx-auto max-w-7xl space-y-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mx-auto max-w-7xl space-y-3 sm:space-y-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Admin Deals</h1>
-              <p className="mt-1 text-sm text-zinc-400 sm:text-base">
-                Review submissions and update statuses fast.
+              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Admin Deals</h1>
+              <p className="mt-0.5 text-xs text-zinc-400 sm:text-sm">
+                Review submissions and update statuses.
               </p>
             </div>
 
             <button
               type="button"
               onClick={fetchRows}
-              className="h-10 rounded-2xl bg-white px-4 text-sm font-semibold text-black transition hover:bg-zinc-200 sm:h-11"
+              className="h-10 rounded-2xl bg-white px-4 text-sm font-semibold text-black transition hover:bg-zinc-200"
             >
               {loadingRows ? "Refreshing..." : "Refresh"}
             </button>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-white/90 px-4 py-3 text-sm text-slate-700">
+          <div className="rounded-2xl border border-white/10 bg-white/90 px-4 py-2.5 text-sm text-slate-700">
             {message}
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-5">
-            <StatCard label="Total Deals" value={stats.total} />
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+            <StatCard label="Deals" value={stats.total} />
             <StatCard label="Pending" value={stats.pending} />
             <StatCard label="Approved" value={stats.approved} />
             <StatCard label="Installed" value={stats.installed} />
             <StatCard label="Chargebacks" value={stats.chargebacks} />
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-white p-4 text-black shadow-sm sm:p-5">
-            <h2 className="text-xl font-semibold sm:text-2xl">Filters</h2>
+          <div className="rounded-3xl border border-white/10 bg-white p-3 text-black shadow-sm sm:p-4">
+            <div className="mb-2 text-lg font-semibold sm:text-xl">Filters</div>
 
-            <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-12">
-              <div className="lg:col-span-5">
-                <label className="mb-1.5 block text-sm font-medium text-zinc-700">
-                  Search
-                </label>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+              <Field label="Search">
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Customer, email, phone, order #..."
-                  className="h-11 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-500 focus:border-zinc-900"
+                  className="h-10 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-500 focus:border-zinc-900"
                 />
-              </div>
+              </Field>
 
-              <div className="lg:col-span-2">
-                <label className="mb-1.5 block text-sm font-medium text-zinc-700">
-                  Status
-                </label>
+              <Field label="Status">
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="h-11 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition focus:border-zinc-900"
+                  className="h-10 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition focus:border-zinc-900"
                 >
                   <option value="all">All statuses</option>
                   <option value="pending">Pending</option>
@@ -275,16 +269,13 @@ export default function AdminDealsPage() {
                   <option value="installed">Installed</option>
                   <option value="chargeback">Chargebacks</option>
                 </select>
-              </div>
+              </Field>
 
-              <div className="lg:col-span-2">
-                <label className="mb-1.5 block text-sm font-medium text-zinc-700">
-                  ISP
-                </label>
+              <Field label="ISP">
                 <select
                   value={ispFilter}
                   onChange={(e) => setIspFilter(e.target.value)}
-                  className="h-11 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition focus:border-zinc-900"
+                  className="h-10 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition focus:border-zinc-900"
                 >
                   <option value="all">All ISPs</option>
                   {ISP_OPTIONS.map((option) => (
@@ -293,16 +284,13 @@ export default function AdminDealsPage() {
                     </option>
                   ))}
                 </select>
-              </div>
+              </Field>
 
-              <div className="lg:col-span-3">
-                <label className="mb-1.5 block text-sm font-medium text-zinc-700">
-                  Team
-                </label>
+              <Field label="Team">
                 <select
                   value={teamFilter}
                   onChange={(e) => setTeamFilter(e.target.value)}
-                  className="h-11 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition focus:border-zinc-900"
+                  className="h-10 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition focus:border-zinc-900"
                 >
                   <option value="all">All teams</option>
                   {teamOptions.map((option) => (
@@ -311,7 +299,7 @@ export default function AdminDealsPage() {
                     </option>
                   ))}
                 </select>
-              </div>
+              </Field>
             </div>
           </div>
 
@@ -320,60 +308,57 @@ export default function AdminDealsPage() {
               const customer = row.customer_name || row.customer || "-";
               const phone = row.customer_phone || row.phone || "-";
               const install = row.installation_date || row.install_date || "-";
+              const saleDate = row.created_at
+                ? new Date(row.created_at).toLocaleDateString()
+                : "-";
+              const agent = row.rep_name || row.rep_email || "-";
 
               return (
                 <div
                   key={row.id}
                   className="rounded-3xl border border-white/10 bg-white p-4 text-black shadow-sm sm:p-5"
                 >
-                  <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0 flex-1">
-                      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                        <div className="min-w-0">
-                          <div className="truncate text-lg font-semibold text-zinc-950">
-                            {customer}
-                          </div>
-                          <div className="mt-1 break-all text-sm text-zinc-500">
-                            {row.customer_email || "-"}
-                          </div>
-                        </div>
-
-                        <div className="shrink-0">
-                          <StatusPill status={row.status || "pending"} />
-                        </div>
+                      <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+                        <CompactItem label="Team" value={row.team || "-"} />
+                        <CompactItem label="ISP" value={row.isp || "-"} />
+                        <CompactItem label="Agent" value={agent} />
                       </div>
 
-                      <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 lg:grid-cols-4">
-                        <InfoItem label="Team" value={row.team || "-"} />
-                        <InfoItem label="ISP" value={row.isp || "-"} />
-                        <InfoItem label="Package" value={row.package || "-"} />
-                        <InfoItem label="Voice/TV" value={`${row.voice || "-"} / ${row.tv || "-"}`} />
-                        <InfoItem label="Phone" value={phone} />
-                        <InfoItem label="Order #" value={row.order_number || "-"} />
-                        <InfoItem label="Install" value={install} />
-                        <InfoItem label="Rep" value={row.rep_name || row.rep_email || "-"} />
+                      <div className="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+                        <CompactItem label="Customer" value={customer} />
+                        <CompactItem label="Phone" value={phone} />
+                        <CompactItem label="Email" value={row.customer_email || "-"} />
                       </div>
 
-                      <div className="mt-4">
-                        <div className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-                          Address
-                        </div>
-                        <div className="mt-1 text-sm text-zinc-800">
-                          {row.address || "-"}
-                        </div>
+                      <div className="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+                        <CompactItem label="Package" value={row.package || "-"} />
+                        <CompactItem label="VAS" value={row.vas || "-"} />
+                        <CompactItem label="Voice" value={row.voice || "-"} />
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+                        <CompactItem label="Sale Date" value={saleDate} />
+                        <CompactItem label="Install Date" value={install} />
+                        <CompactItem label="Order #" value={row.order_number || "-"} />
                       </div>
 
                       <div className="mt-3">
-                        <div className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-                          VAS
+                        <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+                          Address
                         </div>
-                        <div className="mt-1 text-sm text-zinc-800">
-                          {row.vas || "-"}
+                        <div className="mt-1 text-sm text-zinc-900">
+                          {row.address || "-"}
                         </div>
                       </div>
                     </div>
 
-                    <div className="xl:w-[260px] xl:pl-4">
+                    <div className="lg:w-[270px] lg:pl-4">
+                      <div className="mb-2 flex lg:justify-end">
+                        <StatusPill status={row.status || "pending"} />
+                      </div>
+
                       <div className="grid grid-cols-2 gap-2">
                         <ActionButton
                           label="Pending"
@@ -414,22 +399,41 @@ export default function AdminDealsPage() {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: number }) {
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="rounded-2xl bg-white p-3 text-black shadow-sm sm:p-4">
-      <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500 sm:text-xs">
-        {label}
-      </div>
-      <div className="mt-1 text-2xl font-bold leading-none sm:mt-2 sm:text-3xl">{value}</div>
+    <div>
+      <label className="mb-1 block text-xs font-medium text-zinc-700">{label}</label>
+      {children}
     </div>
   );
 }
 
-function InfoItem({ label, value }: { label: string; value: string }) {
+function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div>
-      <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">{label}</div>
-      <div className="mt-1 text-sm text-zinc-900">{value}</div>
+    <div className="rounded-2xl bg-white px-3 py-2.5 text-black shadow-sm">
+      <div className="text-[10px] font-medium uppercase tracking-wide text-slate-500 sm:text-[11px]">
+        {label}
+      </div>
+      <div className="mt-1 text-2xl font-bold leading-none">{value}</div>
+    </div>
+  );
+}
+
+function CompactItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+        {label}
+      </div>
+      <div className="mt-1 break-words text-sm font-medium text-zinc-900">
+        {value}
+      </div>
     </div>
   );
 }
@@ -439,7 +443,7 @@ function StatusPill({ status }: { status: string }) {
 
   if (normalized === "approved") {
     return (
-      <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+      <span className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
         Approved
       </span>
     );
@@ -447,7 +451,7 @@ function StatusPill({ status }: { status: string }) {
 
   if (normalized === "installed") {
     return (
-      <span className="inline-flex rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-700">
+      <span className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
         Installed
       </span>
     );
@@ -455,14 +459,14 @@ function StatusPill({ status }: { status: string }) {
 
   if (normalized === "chargeback") {
     return (
-      <span className="inline-flex rounded-full bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-700">
+      <span className="inline-flex rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700">
         Chargeback
       </span>
     );
   }
 
   return (
-    <span className="inline-flex rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-700">
+    <span className="inline-flex rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-700">
       Pending
     </span>
   );
@@ -489,7 +493,7 @@ function ActionButton({
   return (
     <button
       onClick={onClick}
-      className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${styles}`}
+      className={`rounded-xl px-3 py-2.5 text-sm font-semibold transition ${styles}`}
     >
       {label}
     </button>
