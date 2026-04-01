@@ -27,9 +27,11 @@ export default function AdminSubmissionDetailPage() {
   const [authorized, setAuthorized] = useState(false);
   const [checking, setChecking] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
   const [message, setMessage] = useState("Checking access...");
   const [tableName, setTableName] = useState(tableFromUrl);
   const [row, setRow] = useState<AnyRow | null>(null);
+  const [currentUserRole, setCurrentUserRole] = useState("");
 
   useEffect(() => {
     init();
@@ -63,6 +65,7 @@ export default function AdminSubmissionDetailPage() {
       return;
     }
 
+    setCurrentUserRole(profile.role);
     setAuthorized(true);
     setChecking(false);
 
@@ -75,7 +78,11 @@ export default function AdminSubmissionDetailPage() {
     }
 
     for (const candidate of TABLE_CANDIDATES) {
-      const { error } = await supabase.from(candidate).select("id").eq("id", id).maybeSingle();
+      const { error } = await supabase
+        .from(candidate)
+        .select("id")
+        .eq("id", id)
+        .maybeSingle();
 
       if (!error) return candidate;
 
@@ -130,6 +137,38 @@ export default function AdminSubmissionDetailPage() {
     setMessage("Submission loaded.");
   }
 
+  async function handleDeleteSubmission() {
+    if (currentUserRole !== "admin") {
+      setMessage("Only the Owner can delete submissions.");
+      return;
+    }
+
+    if (!tableName) {
+      setMessage("Could not find onboarding table.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Delete this onboarding submission? This removes it from onboarding review."
+    );
+
+    if (!confirmed) return;
+
+    setDeleting(true);
+    setMessage("Deleting submission...");
+
+    const { error } = await supabase.from(tableName).delete().eq("id", id);
+
+    setDeleting(false);
+
+    if (error) {
+      setMessage("Delete error: " + error.message);
+      return;
+    }
+
+    router.push("/admin");
+  }
+
   const title = useMemo(() => {
     if (!row) return "Submission Details";
     return row.name || row.full_name || row.email || "Submission Details";
@@ -142,8 +181,8 @@ export default function AdminSubmissionDetailPage() {
       ["Name", row.name || row.full_name || "-"],
       ["Email", row.email || "-"],
       ["Phone", row.phone || row.phone_number || "-"],
-      ["Coordinator", row.coordinator || "-"],
-      ["Team", row.team || "-"],
+      ["Coordinator", row.coordinator || row.onboarding_coordinator || "-"],
+      ["Team", row.team || row.team_name || "-"],
       ["ISP", row.isp || row.nsp || "-"],
       ["Status", row.status || "pending"],
       ["Created", row.created_at ? new Date(row.created_at).toLocaleString() : "-"],
@@ -195,7 +234,9 @@ export default function AdminSubmissionDetailPage() {
       "phone",
       "phone_number",
       "coordinator",
+      "onboarding_coordinator",
       "team",
+      "team_name",
       "isp",
       "nsp",
       "status",
@@ -241,7 +282,7 @@ export default function AdminSubmissionDetailPage() {
               </p>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => router.push("/admin")}
@@ -249,6 +290,7 @@ export default function AdminSubmissionDetailPage() {
               >
                 Back
               </button>
+
               <button
                 type="button"
                 onClick={loadSubmission}
@@ -256,6 +298,17 @@ export default function AdminSubmissionDetailPage() {
               >
                 {loading ? "Refreshing..." : "Refresh"}
               </button>
+
+              {currentUserRole === "admin" && (
+                <button
+                  type="button"
+                  onClick={handleDeleteSubmission}
+                  disabled={deleting || !row}
+                  className="rounded-2xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {deleting ? "Deleting..." : "Delete Submission"}
+                </button>
+              )}
             </div>
           </div>
 
