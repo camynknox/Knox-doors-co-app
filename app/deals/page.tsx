@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import TopNav from "@/app/components/top-nav";
 import { supabase } from "@/app/lib/supabase";
@@ -31,12 +31,7 @@ const PACKAGE_OPTIONS = [
   "Other",
 ];
 
-const VAS_OPTIONS = [
-  "WiFi Extender",
-  "WiFi Protection",
-  "Tech Protect",
-];
-
+const VAS_OPTIONS = ["WiFi Extender", "WiFi Protection", "Tech Protect"];
 const YES_NO_OPTIONS = ["Yes", "No"];
 
 type ProfileLike = {
@@ -67,16 +62,15 @@ export default function DealsPage() {
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
-  const [address, setAddress] = useState("");
 
   const [isp, setIsp] = useState("");
   const [packageName, setPackageName] = useState("");
 
   const [vasSelections, setVasSelections] = useState<string[]>([]);
   const [voice, setVoice] = useState("");
-  const [tv, setTv] = useState("");
 
   const [orderNumber, setOrderNumber] = useState("");
+  const [saleDate, setSaleDate] = useState("");
   const [installationDate, setInstallationDate] = useState("");
 
   useEffect(() => {
@@ -132,12 +126,9 @@ export default function DealsPage() {
 
   async function loadProfile(userId: string, email: string): Promise<ProfileLike | null> {
     const attempts = [
-      async () =>
-        supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
-      async () =>
-        supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
-      async () =>
-        supabase.from("profiles").select("*").eq("email", email).maybeSingle(),
+      async () => supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
+      async () => supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
+      async () => supabase.from("profiles").select("*").eq("email", email).maybeSingle(),
     ];
 
     for (const attempt of attempts) {
@@ -166,15 +157,16 @@ export default function DealsPage() {
       package: packageName || null,
       vas: vasValue || null,
       voice: voice || null,
-      tv: tv || null,
+      tv: null,
 
       customer_name: customerName || null,
       customer_email: customerEmail || null,
       customer_phone: customerPhone || null,
-      address: address || null,
+      address: null,
 
       order_number: orderNumber || null,
       installation_date: installationDate || null,
+      created_at: saleDate ? new Date(`${saleDate}T12:00:00`).toISOString() : undefined,
       status: "pending",
     };
 
@@ -194,12 +186,11 @@ export default function DealsPage() {
     setCustomerName("");
     setCustomerEmail("");
     setCustomerPhone("");
-    setAddress("");
     setPackageName("");
     setVasSelections([]);
     setVoice("");
-    setTv("");
     setOrderNumber("");
+    setSaleDate("");
     setInstallationDate("");
 
     setTimeout(() => {
@@ -214,8 +205,6 @@ export default function DealsPage() {
         : [...prev, option]
     );
   }
-
-  const today = useMemo(() => new Date().toISOString().split("T")[0], []);
 
   if (pageLoading) {
     return (
@@ -274,22 +263,15 @@ export default function DealsPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <SectionCard
               title="Customer Information"
-              description="Basic customer contact and service address."
+              description="Basic customer contact details."
             >
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
                 <Input
                   label="Customer Name"
                   value={customerName}
                   onChange={setCustomerName}
                   required
                   placeholder="Enter customer name"
-                />
-                <Input
-                  label="Address"
-                  value={address}
-                  onChange={setAddress}
-                  required
-                  placeholder="Enter install address"
                 />
                 <Input
                   label="Phone"
@@ -336,7 +318,7 @@ export default function DealsPage() {
               <div className="space-y-4">
                 <div>
                   <div className="mb-2 text-sm font-medium text-zinc-800">VAS</div>
-                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid gap-2 md:grid-cols-3">
                     {VAS_OPTIONS.map((opt) => {
                       const active = vasSelections.includes(opt);
 
@@ -365,12 +347,6 @@ export default function DealsPage() {
                     onChange={setVoice}
                     options={YES_NO_OPTIONS}
                   />
-                  <Select
-                    label="TV"
-                    value={tv}
-                    onChange={setTv}
-                    options={YES_NO_OPTIONS}
-                  />
                 </div>
               </div>
             </SectionCard>
@@ -379,18 +355,22 @@ export default function DealsPage() {
               title="Order Details"
               description="Enter sale tracking and install info."
             >
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <Input
-                  label="Order Number"
-                  value={orderNumber}
-                  onChange={setOrderNumber}
-                  placeholder="Enter order number"
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                <DateInput
+                  label="Sale Date"
+                  value={saleDate}
+                  onChange={setSaleDate}
                 />
                 <DateInput
                   label="Install Date"
                   value={installationDate}
                   onChange={setInstallationDate}
-                  min={today}
+                />
+                <Input
+                  label="Order Number"
+                  value={orderNumber}
+                  onChange={setOrderNumber}
+                  placeholder="Enter order number"
                 />
               </div>
             </SectionCard>
@@ -520,12 +500,10 @@ function DateInput({
   label,
   value,
   onChange,
-  min,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  min?: string;
 }) {
   return (
     <div className="flex flex-col gap-1.5">
@@ -533,7 +511,6 @@ function DateInput({
       <input
         type="date"
         value={value}
-        min={min}
         onChange={(e) => onChange(e.target.value)}
         className="h-12 rounded-2xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition focus:border-zinc-900"
       />
