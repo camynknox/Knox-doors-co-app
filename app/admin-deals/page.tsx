@@ -25,7 +25,9 @@ type DealRow = {
   id: string;
   team?: string | null;
   customer?: string | null;
+  customer_name?: string | null;
   customer_email?: string | null;
+  customer_phone?: string | null;
   phone?: string | null;
   isp?: string | null;
   package?: string | null;
@@ -34,9 +36,12 @@ type DealRow = {
   tv?: string | null;
   address?: string | null;
   order_number?: string | null;
+  installation_date?: string | null;
   install_date?: string | null;
   status?: string | null;
   created_at?: string | null;
+  rep_name?: string | null;
+  rep_email?: string | null;
 };
 
 export default function AdminDealsPage() {
@@ -153,13 +158,17 @@ export default function AdminDealsPage() {
           : [
               row.team,
               row.customer,
+              row.customer_name,
               row.customer_email,
+              row.customer_phone,
               row.phone,
               row.isp,
               row.package,
               row.vas,
               row.address,
               row.order_number,
+              row.rep_name,
+              row.rep_email,
             ]
               .filter(Boolean)
               .some((value) => String(value).toLowerCase().includes(q));
@@ -306,154 +315,98 @@ export default function AdminDealsPage() {
             </div>
           </div>
 
-          <div className="space-y-3 md:hidden">
-            {filteredRows.map((row) => (
-              <div key={row.id} className="rounded-3xl border border-white/10 bg-white p-4 text-black shadow-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-base font-semibold text-zinc-950">{row.customer || "-"}</div>
-                    <div className="mt-1 text-sm text-zinc-500">{row.customer_email || "-"}</div>
+          <div className="space-y-3">
+            {filteredRows.map((row) => {
+              const customer = row.customer_name || row.customer || "-";
+              const phone = row.customer_phone || row.phone || "-";
+              const install = row.installation_date || row.install_date || "-";
+
+              return (
+                <div
+                  key={row.id}
+                  className="rounded-3xl border border-white/10 bg-white p-4 text-black shadow-sm sm:p-5"
+                >
+                  <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                        <div className="min-w-0">
+                          <div className="truncate text-lg font-semibold text-zinc-950">
+                            {customer}
+                          </div>
+                          <div className="mt-1 break-all text-sm text-zinc-500">
+                            {row.customer_email || "-"}
+                          </div>
+                        </div>
+
+                        <div className="shrink-0">
+                          <StatusPill status={row.status || "pending"} />
+                        </div>
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 lg:grid-cols-4">
+                        <InfoItem label="Team" value={row.team || "-"} />
+                        <InfoItem label="ISP" value={row.isp || "-"} />
+                        <InfoItem label="Package" value={row.package || "-"} />
+                        <InfoItem label="Voice/TV" value={`${row.voice || "-"} / ${row.tv || "-"}`} />
+                        <InfoItem label="Phone" value={phone} />
+                        <InfoItem label="Order #" value={row.order_number || "-"} />
+                        <InfoItem label="Install" value={install} />
+                        <InfoItem label="Rep" value={row.rep_name || row.rep_email || "-"} />
+                      </div>
+
+                      <div className="mt-4">
+                        <div className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                          Address
+                        </div>
+                        <div className="mt-1 text-sm text-zinc-800">
+                          {row.address || "-"}
+                        </div>
+                      </div>
+
+                      <div className="mt-3">
+                        <div className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                          VAS
+                        </div>
+                        <div className="mt-1 text-sm text-zinc-800">
+                          {row.vas || "-"}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="xl:w-[260px] xl:pl-4">
+                      <div className="grid grid-cols-2 gap-2">
+                        <ActionButton
+                          label="Pending"
+                          onClick={() => updateStatus(row.id, "pending")}
+                          variant="light"
+                        />
+                        <ActionButton
+                          label="Approve"
+                          onClick={() => updateStatus(row.id, "approved")}
+                          variant="green"
+                        />
+                        <ActionButton
+                          label="Installed"
+                          onClick={() => updateStatus(row.id, "installed")}
+                          variant="blue"
+                        />
+                        <ActionButton
+                          label="Chargeback"
+                          onClick={() => updateStatus(row.id, "chargeback")}
+                          variant="red"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <StatusPill status={row.status || "pending"} />
                 </div>
-
-                <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                  <InfoItem label="Team" value={row.team || "-"} />
-                  <InfoItem label="ISP" value={row.isp || "-"} />
-                  <InfoItem label="Package" value={row.package || "-"} />
-                  <InfoItem label="Phone" value={row.phone || "-"} />
-                  <InfoItem label="Voice / TV" value={`${row.voice || "-"} / ${row.tv || "-"}`} />
-                  <InfoItem label="Install" value={row.install_date || "-"} />
-                </div>
-
-                <div className="mt-3">
-                  <div className="text-xs font-medium uppercase tracking-wide text-zinc-500">Address</div>
-                  <div className="mt-1 text-sm text-zinc-800">{row.address || "-"}</div>
-                </div>
-
-                <div className="mt-3">
-                  <div className="text-xs font-medium uppercase tracking-wide text-zinc-500">VAS</div>
-                  <div className="mt-1 text-sm text-zinc-800">{row.vas || "-"}</div>
-                </div>
-
-                <div className="mt-3">
-                  <div className="text-xs font-medium uppercase tracking-wide text-zinc-500">Order #</div>
-                  <div className="mt-1 text-sm text-zinc-800">{row.order_number || "-"}</div>
-                </div>
-
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  <ActionButton
-                    label="Pending"
-                    onClick={() => updateStatus(row.id, "pending")}
-                    variant="light"
-                  />
-                  <ActionButton
-                    label="Approve"
-                    onClick={() => updateStatus(row.id, "approved")}
-                    variant="green"
-                  />
-                  <ActionButton
-                    label="Installed"
-                    onClick={() => updateStatus(row.id, "installed")}
-                    variant="blue"
-                  />
-                  <ActionButton
-                    label="Chargeback"
-                    onClick={() => updateStatus(row.id, "chargeback")}
-                    variant="red"
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
 
             {filteredRows.length === 0 && (
               <div className="rounded-3xl border border-white/10 bg-white px-4 py-8 text-center text-sm text-zinc-500 shadow-sm">
                 No deals found.
               </div>
             )}
-          </div>
-
-          <div className="hidden overflow-hidden rounded-3xl border border-white/10 bg-white text-black shadow-sm md:block">
-            <div className="border-b border-zinc-200 px-5 py-4">
-              <h2 className="text-lg font-semibold">Deals</h2>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="min-w-[1450px] w-full border-collapse text-sm">
-                <thead className="bg-zinc-50">
-                  <tr className="border-b border-zinc-200 text-left">
-                    <th className="px-4 py-4 font-semibold text-zinc-700">Team</th>
-                    <th className="px-4 py-4 font-semibold text-zinc-700">Customer</th>
-                    <th className="px-4 py-4 font-semibold text-zinc-700">Customer Email</th>
-                    <th className="px-4 py-4 font-semibold text-zinc-700">Phone</th>
-                    <th className="px-4 py-4 font-semibold text-zinc-700">ISP</th>
-                    <th className="px-4 py-4 font-semibold text-zinc-700">Package</th>
-                    <th className="px-4 py-4 font-semibold text-zinc-700">VAS</th>
-                    <th className="px-4 py-4 font-semibold text-zinc-700">Voice / TV</th>
-                    <th className="px-4 py-4 font-semibold text-zinc-700">Address</th>
-                    <th className="px-4 py-4 font-semibold text-zinc-700">Order #</th>
-                    <th className="px-4 py-4 font-semibold text-zinc-700">Install</th>
-                    <th className="px-4 py-4 font-semibold text-zinc-700">Status</th>
-                    <th className="px-4 py-4 font-semibold text-zinc-700">Actions</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {filteredRows.map((row) => (
-                    <tr key={row.id} className="border-b border-zinc-100 align-top">
-                      <td className="px-4 py-4 text-zinc-800">{row.team || "-"}</td>
-                      <td className="px-4 py-4 font-medium text-zinc-950">{row.customer || "-"}</td>
-                      <td className="px-4 py-4 text-zinc-700">{row.customer_email || "-"}</td>
-                      <td className="px-4 py-4 text-zinc-700">{row.phone || "-"}</td>
-                      <td className="px-4 py-4 text-zinc-700">{row.isp || "-"}</td>
-                      <td className="px-4 py-4 text-zinc-700">{row.package || "-"}</td>
-                      <td className="px-4 py-4 text-zinc-700">{row.vas || "-"}</td>
-                      <td className="px-4 py-4 text-zinc-700">
-                        {row.voice || "-"} / {row.tv || "-"}
-                      </td>
-                      <td className="px-4 py-4 text-zinc-700">{row.address || "-"}</td>
-                      <td className="px-4 py-4 text-zinc-700">{row.order_number || "-"}</td>
-                      <td className="px-4 py-4 text-zinc-700">{row.install_date || "-"}</td>
-                      <td className="px-4 py-4">
-                        <StatusPill status={row.status || "pending"} />
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex flex-wrap gap-2">
-                          <ActionButton
-                            label="Pending"
-                            onClick={() => updateStatus(row.id, "pending")}
-                            variant="light"
-                          />
-                          <ActionButton
-                            label="Approve"
-                            onClick={() => updateStatus(row.id, "approved")}
-                            variant="green"
-                          />
-                          <ActionButton
-                            label="Installed"
-                            onClick={() => updateStatus(row.id, "installed")}
-                            variant="blue"
-                          />
-                          <ActionButton
-                            label="Chargeback"
-                            onClick={() => updateStatus(row.id, "chargeback")}
-                            variant="red"
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-
-                  {filteredRows.length === 0 && (
-                    <tr>
-                      <td colSpan={13} className="px-4 py-10 text-center text-sm text-zinc-500">
-                        No deals found.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
           </div>
         </div>
       </div>
@@ -536,7 +489,7 @@ function ActionButton({
   return (
     <button
       onClick={onClick}
-      className={`rounded-xl px-3 py-2 text-xs font-semibold transition whitespace-nowrap ${styles}`}
+      className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${styles}`}
     >
       {label}
     </button>
