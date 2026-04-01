@@ -174,7 +174,7 @@ export default function OnboardingPage() {
 
             <div>
               <label className="mb-2 block text-sm font-medium text-zinc-700">
-                ISP
+                Preferred ISP
               </label>
               <input
                 value={isp}
