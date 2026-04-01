@@ -274,18 +274,19 @@ export default function RoleManagerPage() {
 
           <div className="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm">
             <div className="flex flex-col gap-3">
-              <div className="flex flex-wrap gap-2">
+              <div className="grid grid-cols-5 gap-1.5">
                 {ROLE_FILTERS.map((role) => (
                   <button
                     key={role}
                     onClick={() => setActiveRoleFilter(role)}
-                    className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
+                    className={`min-w-0 rounded-full px-1.5 py-2 text-[10px] font-semibold leading-tight transition sm:px-3 sm:text-xs ${
                       activeRoleFilter === role
                         ? "border border-zinc-900 bg-zinc-900 text-white"
                         : "border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50"
                     }`}
                   >
-                    {prettyFilter(role)} ({counts[role as keyof typeof counts]})
+                    <span className="block truncate">{prettyFilter(role)}</span>
+                    <span className="block opacity-80">({counts[role as keyof typeof counts]})</span>
                   </button>
                 ))}
               </div>
@@ -328,18 +329,18 @@ export default function RoleManagerPage() {
                         Assign Role
                       </div>
                       {editable ? (
-                        <div className="flex flex-wrap gap-2">
+                        <div className="grid grid-cols-4 gap-1.5">
                           {allowedRoles.map((role) => (
                             <button
                               key={role}
                               onClick={() => updateRole(user.id, role, user)}
-                              className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${
+                              className={`min-w-0 rounded-xl px-1 py-2 text-[10px] font-semibold leading-tight transition ${
                                 user.role === role
                                   ? "bg-zinc-900 text-white"
                                   : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
                               }`}
                             >
-                              {prettyRole(role)}
+                              <span className="block truncate">{prettyRole(role)}</span>
                             </button>
                           ))}
                         </div>
@@ -388,41 +389,38 @@ export default function RoleManagerPage() {
 
             <div className="overflow-x-auto">
               <table className="min-w-[980px] w-full border-collapse text-sm">
-                <thead className="bg-zinc-50">
-                  <tr className="border-b border-zinc-200 text-left">
-                    <th className="px-4 py-3 font-semibold text-zinc-700">Name</th>
-                    <th className="px-4 py-3 font-semibold text-zinc-700">Email</th>
-                    <th className="px-4 py-3 font-semibold text-zinc-700">Role</th>
-                    <th className="px-4 py-3 font-semibold text-zinc-700">Team</th>
-                    <th className="px-4 py-3 font-semibold text-zinc-700">Change Role</th>
-                    <th className="px-4 py-3 font-semibold text-zinc-700">Assign Team</th>
+                <thead>
+                  <tr className="border-b border-zinc-200 bg-zinc-50 text-left">
+                    <th className="px-5 py-3 font-semibold text-zinc-700">Name</th>
+                    <th className="px-5 py-3 font-semibold text-zinc-700">Email</th>
+                    <th className="px-5 py-3 font-semibold text-zinc-700">Role</th>
+                    <th className="px-5 py-3 font-semibold text-zinc-700">Team</th>
+                    <th className="px-5 py-3 font-semibold text-zinc-700">Change Role</th>
+                    <th className="px-5 py-3 font-semibold text-zinc-700">Change Team</th>
                   </tr>
                 </thead>
-
                 <tbody>
                   {filteredUsers.map((user) => {
                     const editable = canEditTarget(user);
 
                     return (
                       <tr key={user.id} className="border-b border-zinc-100 align-top">
-                        <td className="px-4 py-4 text-zinc-900">{user.full_name || user.name || "-"}</td>
-                        <td className="px-4 py-4 text-zinc-700">{user.email || "-"}</td>
-                        <td className="px-4 py-4">
+                        <td className="px-5 py-4 font-medium text-zinc-900">
+                          {user.full_name || user.name || "-"}
+                        </td>
+                        <td className="px-5 py-4 text-zinc-600">{user.email || "-"}</td>
+                        <td className="px-5 py-4">
                           <RolePill role={user.role || ""} />
                         </td>
-                        <td className="px-4 py-4">
-                          <span className="inline-flex rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-700">
-                            {user.team || "-"}
-                          </span>
-                        </td>
-                        <td className="px-4 py-4">
+                        <td className="px-5 py-4 text-zinc-700">{user.team || "-"}</td>
+                        <td className="px-5 py-4">
                           {editable ? (
                             <div className="flex flex-wrap gap-2">
                               {allowedRoles.map((role) => (
                                 <button
                                   key={role}
                                   onClick={() => updateRole(user.id, role, user)}
-                                  className={`rounded-xl px-3 py-2 text-xs font-semibold transition whitespace-nowrap ${
+                                  className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${
                                     user.role === role
                                       ? "bg-zinc-900 text-white"
                                       : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
@@ -433,15 +431,15 @@ export default function RoleManagerPage() {
                               ))}
                             </div>
                           ) : (
-                            <span className="text-xs text-zinc-500">No access</span>
+                            <span className="text-sm text-zinc-400">No access</span>
                           )}
                         </td>
-                        <td className="px-4 py-4">
+                        <td className="px-5 py-4">
                           {editable ? (
                             <select
                               value={user.team || ""}
                               onChange={(e) => updateTeam(user.id, e.target.value, user)}
-                              className="h-10 min-w-[150px] rounded-xl border border-zinc-300 bg-white px-3 text-sm text-zinc-900 outline-none transition focus:border-zinc-900"
+                              className="h-10 min-w-[160px] rounded-xl border border-zinc-300 bg-white px-3 text-sm text-zinc-900 outline-none transition focus:border-zinc-900"
                             >
                               <option value="">Select team</option>
                               {TEAMS.map((team) => (
@@ -451,7 +449,7 @@ export default function RoleManagerPage() {
                               ))}
                             </select>
                           ) : (
-                            <span className="text-xs text-zinc-500">No access</span>
+                            <span className="text-sm text-zinc-400">No access</span>
                           )}
                         </td>
                       </tr>
@@ -460,7 +458,7 @@ export default function RoleManagerPage() {
 
                   {filteredUsers.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="px-4 py-10 text-center text-sm text-zinc-500">
+                      <td colSpan={6} className="px-5 py-10 text-center text-sm text-zinc-500">
                         No users found.
                       </td>
                     </tr>
@@ -479,8 +477,7 @@ function prettyRole(role: string) {
   if (role === "team_leader") return "Team Leader";
   if (role === "assistant_admin") return "Assistant Admin";
   if (role === "admin") return "Admin";
-  if (role === "rep") return "Rep";
-  return role || "-";
+  return "Rep";
 }
 
 function prettyFilter(role: string) {
@@ -489,33 +486,18 @@ function prettyFilter(role: string) {
 }
 
 function RolePill({ role }: { role: string }) {
-  if (role === "admin") {
-    return (
-      <span className="inline-flex rounded-full bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-700">
-        Admin
-      </span>
-    );
-  }
-
-  if (role === "assistant_admin") {
-    return (
-      <span className="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">
-        Assistant Admin
-      </span>
-    );
-  }
-
-  if (role === "team_leader") {
-    return (
-      <span className="inline-flex rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-700">
-        Team Leader
-      </span>
-    );
-  }
+  const classes =
+    role === "admin"
+      ? "bg-red-100 text-red-700"
+      : role === "assistant_admin"
+        ? "bg-amber-100 text-amber-700"
+        : role === "team_leader"
+          ? "bg-blue-100 text-blue-700"
+          : "bg-zinc-100 text-zinc-700";
 
   return (
-    <span className="inline-flex rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-700">
-      Rep
+    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${classes}`}>
+      {prettyRole(role)}
     </span>
   );
 }
@@ -523,8 +505,10 @@ function RolePill({ role }: { role: string }) {
 function InfoItem({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">{label}</div>
-      <div className="mt-1 text-sm text-zinc-900">{value}</div>
+      <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+        {label}
+      </div>
+      <div className="mt-1 text-sm font-medium text-zinc-900">{value}</div>
     </div>
   );
 }

@@ -317,8 +317,8 @@ export default function AdminDealsPage() {
                   key={row.id}
                   className="rounded-3xl border border-white/10 bg-white p-3 text-black shadow-sm sm:p-4"
                 >
-                  <div className="flex flex-col gap-3 lg:flex-row lg:items-stretch lg:justify-between">
-                    <div className="min-w-0 flex-1">
+                  <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_290px] lg:items-stretch">
+                    <div className="min-w-0">
                       <div className="grid grid-cols-3 gap-x-3 gap-y-2 text-sm">
                         <CompactItem label="Team" value={row.team || "-"} />
                         <CompactItem label="ISP" value={row.isp || "-"} />
@@ -344,12 +344,12 @@ export default function AdminDealsPage() {
                       </div>
                     </div>
 
-                    <div className="lg:w-[280px] lg:pl-4">
-                      <div className="mb-2 flex lg:justify-end">
+                    <div className="flex h-full flex-col lg:pl-4">
+                      <div className="mb-3 flex lg:justify-end">
                         <StatusPill status={row.status || "pending"} />
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2 h-full content-start">
+                      <div className="grid grid-cols-2 gap-3 lg:mt-auto">
                         <ActionButton
                           label="Pending"
                           onClick={() => updateStatus(row.id, "pending")}
@@ -485,7 +485,7 @@ function ActionButton({
   return (
     <button
       onClick={onClick}
-      className={`h-12 rounded-2xl px-3 text-sm font-semibold transition flex items-center justify-center ${styles}`}
+      className={`h-14 rounded-2xl px-3 text-base font-semibold transition flex items-center justify-center ${styles}`}
     >
       {label}
     </button>
