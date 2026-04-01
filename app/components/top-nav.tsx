@@ -58,7 +58,9 @@ export default function TopNav() {
 
   function getHomeRoute(currentRole: string) {
     if (currentRole === "team_leader") return "/team-dashboard";
-    if (currentRole === "assistant_admin" || currentRole === "admin") return "/admin-deals";
+    if (currentRole === "assistant_admin" || currentRole === "admin") {
+      return "/admin-deals";
+    }
     return "/rep-dashboard";
   }
 
@@ -147,16 +149,12 @@ export default function TopNav() {
 
 function getLinks(role: string) {
   if (role === "rep") {
-    return [
-      { label: "Submit Deal", href: "/deals" },
-      { label: "My Pipeline", href: "/rep-dashboard" },
-    ];
+    return [{ label: "Submit Deal", href: "/deals" }];
   }
 
   if (role === "team_leader") {
     return [
       { label: "Submit Deal", href: "/deals" },
-      { label: "Team Dashboard", href: "/team-dashboard" },
       { label: "Role Manager", href: "/role-manager" },
     ];
   }
@@ -164,7 +162,6 @@ function getLinks(role: string) {
   if (role === "assistant_admin" || role === "admin") {
     return [
       { label: "Submit Deal", href: "/deals" },
-      { label: "Admin Deals", href: "/admin-deals" },
       { label: "Role Manager", href: "/role-manager" },
       { label: "Onboarding Review", href: "/admin" },
     ];
