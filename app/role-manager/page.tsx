@@ -11,7 +11,16 @@ const TEAM_LEADER_ALLOWED_ROLES = ["rep", "team_leader"];
 const TEAMS = ["Internal", "Forsyth"];
 const ROLE_FILTERS = ["all", "rep", "team_leader", "assistant_admin", "admin"];
 
-export default function Page() {
+type ProfileRow = {
+  id: string;
+  full_name?: string | null;
+  name?: string | null;
+  email?: string | null;
+  role?: string | null;
+  team?: string | null;
+};
+
+export default function RoleManagerPage() {
   const router = useRouter();
 
   const [authorized, setAuthorized] = useState(false);
@@ -21,7 +30,7 @@ export default function Page() {
   const [currentUserEmail, setCurrentUserEmail] = useState("");
   const [currentUserTeam, setCurrentUserTeam] = useState("");
 
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<ProfileRow[]>([]);
   const [message, setMessage] = useState("Checking access...");
   const [search, setSearch] = useState("");
   const [activeRoleFilter, setActiveRoleFilter] = useState("all");
@@ -87,14 +96,14 @@ export default function Page() {
       query = query.eq("team", actingTeam);
     }
 
-    const { data, error } = await query;
+    const { data, error } = await query.order("full_name", { ascending: true });
 
     if (error) {
       setMessage("Profiles fetch error: " + error.message);
       return;
     }
 
-    const list = data || [];
+    const list = (data || []) as ProfileRow[];
     setUsers(list);
     setMessage(`Loaded ${list.length} user(s).`);
   }
@@ -106,7 +115,7 @@ export default function Page() {
     return [];
   }
 
-  function canEditTarget(user: any) {
+  function canEditTarget(user: ProfileRow) {
     if (currentUserRole === "admin") return true;
 
     if (currentUserRole === "assistant_admin") {
@@ -124,7 +133,7 @@ export default function Page() {
     return false;
   }
 
-  async function updateRole(id: string, newRole: string, targetUser: any) {
+  async function updateRole(id: string, newRole: string, targetUser: ProfileRow) {
     const allowedRoles = getAllowedRoles();
 
     if (!allowedRoles.includes(newRole)) {
@@ -149,10 +158,7 @@ export default function Page() {
       }
     }
 
-    const { error } = await supabase
-      .from("profiles")
-      .update({ role: newRole })
-      .eq("id", id);
+    const { error } = await supabase.from("profiles").update({ role: newRole }).eq("id", id);
 
     if (error) {
       setMessage("Update role error: " + error.message);
@@ -162,7 +168,7 @@ export default function Page() {
     fetchUsers();
   }
 
-  async function updateTeam(id: string, team: string, targetUser: any) {
+  async function updateTeam(id: string, team: string, targetUser: ProfileRow) {
     if (currentUserRole === "assistant_admin" && targetUser?.role === "admin") {
       setMessage("Assistant admins cannot modify admins.");
       return;
@@ -185,10 +191,7 @@ export default function Page() {
       }
     }
 
-    const { error } = await supabase
-      .from("profiles")
-      .update({ team })
-      .eq("id", id);
+    const { error } = await supabase.from("profiles").update({ team }).eq("id", id);
 
     if (error) {
       setMessage("Update team error: " + error.message);
@@ -214,8 +217,7 @@ export default function Page() {
             role.includes(term) ||
             team.includes(term);
 
-      const matchesRole =
-        activeRoleFilter === "all" ? true : role === activeRoleFilter;
+      const matchesRole = activeRoleFilter === "all" ? true : role === activeRoleFilter;
 
       return matchesSearch && matchesRole;
     });
@@ -233,9 +235,13 @@ export default function Page() {
 
   if (checking) {
     return (
-      <div>
+      <div className="min-h-screen bg-zinc-50">
         <TopNav />
-        <div style={{ padding: "24px", fontFamily: "system-ui" }}>{message}</div>
+        <div className="px-4 py-4 sm:px-6">
+          <div className="mx-auto max-w-7xl rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+            <div className="text-sm text-zinc-500">{message}</div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -245,67 +251,151 @@ export default function Page() {
   const allowedRoles = getAllowedRoles();
 
   return (
-    <div>
+    <div className="min-h-screen bg-zinc-50">
       <TopNav />
 
-      <div style={{ padding: "24px", marginTop: "10px", fontFamily: "system-ui" }}>
-        <div style={{ maxWidth: "1280px", margin: "0 auto" }}>
-          <div style={{ marginBottom: "20px" }}>
-            <h1 style={{ fontSize: "32px", fontWeight: 700, margin: 0, marginBottom: "6px" }}>
+      <div className="px-4 py-4 sm:px-6 sm:py-5">
+        <div className="mx-auto max-w-7xl space-y-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-950 sm:text-3xl">
               Role Manager
             </h1>
-            <div style={{ fontSize: "14px", color: "#666" }}>
-              Manage roles, teams, and access
-            </div>
+            <p className="mt-1 text-sm text-zinc-500">
+              Manage roles, teams, and access.
+            </p>
           </div>
 
-          <div style={msgBox}>
+          <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-600 shadow-sm">
             {message}
             {currentUserRole === "team_leader" && currentUserTeam
               ? ` You are limited to team: ${currentUserTeam}.`
               : ""}
           </div>
 
-          <div style={toolbar}>
-            {ROLE_FILTERS.map((role) => (
-              <button
-                key={role}
-                onClick={() => setActiveRoleFilter(role)}
-                style={{
-                  padding: "8px 12px",
-                  fontSize: "12px",
-                  borderRadius: "999px",
-                  border: activeRoleFilter === role ? "1px solid #111" : "1px solid #ddd",
-                  background: activeRoleFilter === role ? "#111" : "#fff",
-                  color: activeRoleFilter === role ? "#fff" : "#111",
-                  cursor: "pointer",
-                }}
-              >
-                {prettyFilter(role)} ({counts[role as keyof typeof counts]})
-              </button>
-            ))}
+          <div className="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm">
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-wrap gap-2">
+                {ROLE_FILTERS.map((role) => (
+                  <button
+                    key={role}
+                    onClick={() => setActiveRoleFilter(role)}
+                    className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
+                      activeRoleFilter === role
+                        ? "border border-zinc-900 bg-zinc-900 text-white"
+                        : "border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50"
+                    }`}
+                  >
+                    {prettyFilter(role)} ({counts[role as keyof typeof counts]})
+                  </button>
+                ))}
+              </div>
 
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search name, email, role, team..."
-              style={searchInput}
-            />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search name, email, role, team..."
+                className="h-11 w-full rounded-2xl border border-zinc-300 px-4 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-500 focus:border-zinc-900"
+              />
+            </div>
           </div>
 
-          <div style={card}>
-            <div style={cardHeader}>Team Members</div>
+          <div className="space-y-3 md:hidden">
+            {filteredUsers.map((user) => {
+              const editable = canEditTarget(user);
 
-            <div style={{ overflowX: "auto" }}>
-              <table style={table}>
-                <thead>
-                  <tr style={theadRow}>
-                    <th style={th}>Name</th>
-                    <th style={th}>Email</th>
-                    <th style={th}>Role</th>
-                    <th style={th}>Team</th>
-                    <th style={th}>Change Role</th>
-                    <th style={th}>Assign Team</th>
+              return (
+                <div key={user.id} className="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="truncate text-base font-semibold text-zinc-950">
+                        {user.full_name || user.name || "-"}
+                      </div>
+                      <div className="mt-1 break-all text-sm text-zinc-500">
+                        {user.email || "-"}
+                      </div>
+                    </div>
+                    <RolePill role={user.role || ""} />
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    <InfoItem label="Role" value={prettyRole(user.role || "")} />
+                    <InfoItem label="Team" value={user.team || "-"} />
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    <div>
+                      <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-zinc-500">
+                        Assign Role
+                      </div>
+                      {editable ? (
+                        <div className="flex flex-wrap gap-2">
+                          {allowedRoles.map((role) => (
+                            <button
+                              key={role}
+                              onClick={() => updateRole(user.id, role, user)}
+                              className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${
+                                user.role === role
+                                  ? "bg-zinc-900 text-white"
+                                  : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
+                              }`}
+                            >
+                              {prettyRole(role)}
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-zinc-500">No access</div>
+                      )}
+                    </div>
+
+                    <div>
+                      <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-zinc-500">
+                        Assign Team
+                      </div>
+                      {editable ? (
+                        <select
+                          value={user.team || ""}
+                          onChange={(e) => updateTeam(user.id, e.target.value, user)}
+                          className="h-11 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition focus:border-zinc-900"
+                        >
+                          <option value="">Select team</option>
+                          {TEAMS.map((team) => (
+                            <option key={team} value={team}>
+                              {team}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div className="text-sm text-zinc-500">No access</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
+            {filteredUsers.length === 0 && (
+              <div className="rounded-3xl border border-zinc-200 bg-white px-4 py-8 text-center text-sm text-zinc-500 shadow-sm">
+                No users found.
+              </div>
+            )}
+          </div>
+
+          <div className="hidden overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm md:block">
+            <div className="border-b border-zinc-200 px-5 py-4 text-base font-semibold text-zinc-900">
+              Team Members
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="min-w-[980px] w-full border-collapse text-sm">
+                <thead className="bg-zinc-50">
+                  <tr className="border-b border-zinc-200 text-left">
+                    <th className="px-4 py-3 font-semibold text-zinc-700">Name</th>
+                    <th className="px-4 py-3 font-semibold text-zinc-700">Email</th>
+                    <th className="px-4 py-3 font-semibold text-zinc-700">Role</th>
+                    <th className="px-4 py-3 font-semibold text-zinc-700">Team</th>
+                    <th className="px-4 py-3 font-semibold text-zinc-700">Change Role</th>
+                    <th className="px-4 py-3 font-semibold text-zinc-700">Assign Team</th>
                   </tr>
                 </thead>
 
@@ -314,52 +404,44 @@ export default function Page() {
                     const editable = canEditTarget(user);
 
                     return (
-                      <tr key={user.id} style={tbodyRow}>
-                        <td style={td}>{user.full_name || user.name || "-"}</td>
-                        <td style={td}>{user.email || "-"}</td>
-
-                        <td style={td}>
-                          <span style={rolePill(user.role)}>{prettyRole(user.role)}</span>
+                      <tr key={user.id} className="border-b border-zinc-100 align-top">
+                        <td className="px-4 py-4 text-zinc-900">{user.full_name || user.name || "-"}</td>
+                        <td className="px-4 py-4 text-zinc-700">{user.email || "-"}</td>
+                        <td className="px-4 py-4">
+                          <RolePill role={user.role || ""} />
                         </td>
-
-                        <td style={td}>
-                          <span style={teamPill()}>{user.team || "-"}</span>
+                        <td className="px-4 py-4">
+                          <span className="inline-flex rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-700">
+                            {user.team || "-"}
+                          </span>
                         </td>
-
-                        <td style={td}>
+                        <td className="px-4 py-4">
                           {editable ? (
-                            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                            <div className="flex flex-wrap gap-2">
                               {allowedRoles.map((role) => (
                                 <button
                                   key={role}
                                   onClick={() => updateRole(user.id, role, user)}
-                                  style={tinyBtn(
-                                    user.role === role ? "#111" : "#e5e7eb",
-                                    user.role === role ? "white" : "#111"
-                                  )}
+                                  className={`rounded-xl px-3 py-2 text-xs font-semibold transition whitespace-nowrap ${
+                                    user.role === role
+                                      ? "bg-zinc-900 text-white"
+                                      : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
+                                  }`}
                                 >
                                   {prettyRole(role)}
                                 </button>
                               ))}
                             </div>
                           ) : (
-                            <span style={{ fontSize: "12px", color: "#666" }}>No access</span>
+                            <span className="text-xs text-zinc-500">No access</span>
                           )}
                         </td>
-
-                        <td style={td}>
+                        <td className="px-4 py-4">
                           {editable ? (
                             <select
                               value={user.team || ""}
                               onChange={(e) => updateTeam(user.id, e.target.value, user)}
-                              style={{
-                                padding: "10px 12px",
-                                border: "1px solid #d1d5db",
-                                borderRadius: "10px",
-                                background: "white",
-                                fontSize: "13px",
-                                minWidth: "140px",
-                              }}
+                              className="h-10 min-w-[150px] rounded-xl border border-zinc-300 bg-white px-3 text-sm text-zinc-900 outline-none transition focus:border-zinc-900"
                             >
                               <option value="">Select team</option>
                               {TEAMS.map((team) => (
@@ -369,7 +451,7 @@ export default function Page() {
                               ))}
                             </select>
                           ) : (
-                            <span style={{ fontSize: "12px", color: "#666" }}>No access</span>
+                            <span className="text-xs text-zinc-500">No access</span>
                           )}
                         </td>
                       </tr>
@@ -378,7 +460,7 @@ export default function Page() {
 
                   {filteredUsers.length === 0 && (
                     <tr>
-                      <td colSpan={6} style={{ padding: "24px", textAlign: "center", color: "#666" }}>
+                      <td colSpan={6} className="px-4 py-10 text-center text-sm text-zinc-500">
                         No users found.
                       </td>
                     </tr>
@@ -391,91 +473,6 @@ export default function Page() {
       </div>
     </div>
   );
-}
-
-const msgBox = {
-  marginBottom: "16px",
-  fontSize: "14px",
-  padding: "12px 14px",
-  borderRadius: "10px",
-  background: "#f8fafc",
-  border: "1px solid #e5e7eb",
-  color: "#334155",
-};
-
-const toolbar = {
-  display: "flex",
-  gap: "10px",
-  flexWrap: "wrap" as const,
-  alignItems: "center",
-  marginBottom: "16px",
-};
-
-const searchInput = {
-  marginLeft: "auto",
-  minWidth: "260px",
-  padding: "10px 12px",
-  fontSize: "13px",
-  borderRadius: "10px",
-  border: "1px solid #ddd",
-  outline: "none",
-};
-
-const card = {
-  background: "white",
-  border: "1px solid #e5e7eb",
-  borderRadius: "16px",
-  overflow: "hidden",
-  boxShadow: "0 4px 14px rgba(0,0,0,0.04)",
-};
-
-const cardHeader = {
-  padding: "18px 20px",
-  borderBottom: "1px solid #e5e7eb",
-  fontSize: "16px",
-  fontWeight: 600,
-};
-
-const table = {
-  width: "100%",
-  minWidth: "1100px",
-  borderCollapse: "collapse" as const,
-  fontSize: "14px",
-};
-
-const theadRow = {
-  textAlign: "left" as const,
-  background: "#f9fafb",
-  borderBottom: "1px solid #e5e7eb",
-};
-
-const tbodyRow = {
-  borderBottom: "1px solid #f1f5f9",
-};
-
-const th = {
-  padding: "14px 16px",
-  fontWeight: 600,
-  color: "#374151",
-};
-
-const td = {
-  padding: "14px 16px",
-  color: "#111827",
-  verticalAlign: "top" as const,
-};
-
-function tinyBtn(bg: string, color: string) {
-  return {
-    padding: "6px 8px",
-    fontSize: "11px",
-    borderRadius: "8px",
-    border: "none",
-    background: bg,
-    color,
-    cursor: "pointer",
-    whiteSpace: "nowrap" as const,
-  };
 }
 
 function prettyRole(role: string) {
@@ -491,23 +488,43 @@ function prettyFilter(role: string) {
   return prettyRole(role);
 }
 
-function rolePill(role: string) {
-  if (role === "admin") return pill("#fee2e2", "#b91c1c");
-  if (role === "assistant_admin") return pill("#fef3c7", "#92400e");
-  if (role === "team_leader") return pill("#dbeafe", "#1d4ed8");
-  return pill("#f3f4f6", "#374151");
+function RolePill({ role }: { role: string }) {
+  if (role === "admin") {
+    return (
+      <span className="inline-flex rounded-full bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-700">
+        Admin
+      </span>
+    );
+  }
+
+  if (role === "assistant_admin") {
+    return (
+      <span className="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">
+        Assistant Admin
+      </span>
+    );
+  }
+
+  if (role === "team_leader") {
+    return (
+      <span className="inline-flex rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-700">
+        Team Leader
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-700">
+      Rep
+    </span>
+  );
 }
 
-function teamPill() {
-  return pill("#f3f4f6", "#374151");
-}
-
-function pill(bg: string, color: string) {
-  return {
-    padding: "4px 10px",
-    borderRadius: "999px",
-    fontSize: "12px",
-    background: bg,
-    color,
-  };
+function InfoItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">{label}</div>
+      <div className="mt-1 text-sm text-zinc-900">{value}</div>
+    </div>
+  );
 }

@@ -142,15 +142,10 @@ export default function AdminOnboardingPage() {
 
     const previousRows = rows;
 
-    setRows((prev) =>
-      prev.map((row) => (row.id === id ? { ...row, status } : row))
-    );
+    setRows((prev) => prev.map((row) => (row.id === id ? { ...row, status } : row)));
     setMessage(`Updating status to ${status}...`);
 
-    const { error } = await supabase
-      .from(tableName)
-      .update({ status })
-      .eq("id", id);
+    const { error } = await supabase.from(tableName).update({ status }).eq("id", id);
 
     if (error) {
       setRows(previousRows);
@@ -164,8 +159,7 @@ export default function AdminOnboardingPage() {
   const filteredRows = useMemo(() => {
     return rows.filter((row) => {
       const currentStatus = (row.status || "pending").toLowerCase();
-      const matchesStatus =
-        statusFilter === "all" ? true : currentStatus === statusFilter;
+      const matchesStatus = statusFilter === "all" ? true : currentStatus === statusFilter;
 
       const q = search.trim().toLowerCase();
       const matchesSearch =
@@ -202,9 +196,9 @@ export default function AdminOnboardingPage() {
     return (
       <div className="min-h-screen bg-zinc-50">
         <TopNav />
-        <div className="px-4 py-6 sm:px-6">
+        <div className="px-4 py-4 sm:px-6">
           <div className="mx-auto max-w-7xl">
-            <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
+            <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
               <div className="text-sm text-zinc-500">{message}</div>
             </div>
           </div>
@@ -219,20 +213,20 @@ export default function AdminOnboardingPage() {
     <div className="min-h-screen bg-zinc-50">
       <TopNav />
 
-      <div className="px-4 py-5 sm:px-6">
-        <div className="mx-auto max-w-7xl space-y-5">
-          <div className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+      <div className="px-4 py-4 sm:px-6 sm:py-5">
+        <div className="mx-auto max-w-7xl space-y-4">
+          <div className="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5">
+            <div className="flex flex-col gap-3">
               <div>
                 <h1 className="text-2xl font-bold tracking-tight text-zinc-950 sm:text-3xl">
                   Onboarding Review
                 </h1>
                 <p className="mt-1 text-sm text-zinc-500">
-                  Review submissions, update statuses, and open full records.
+                  Review submissions and update statuses.
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-5 xl:min-w-[720px]">
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-5">
                 <StatCard label="Total" value={counts.total} />
                 <StatCard label="Pending" value={counts.pending} />
                 <StatCard label="Approved" value={counts.approved} />
@@ -244,15 +238,13 @@ export default function AdminOnboardingPage() {
 
           <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-600 shadow-sm">
             {message}
-            {tableName ? (
-              <span className="ml-1 text-zinc-400">Table: {tableName}</span>
-            ) : null}
+            {tableName ? <span className="ml-1 text-zinc-400">Table: {tableName}</span> : null}
           </div>
 
-          <div className="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <div className="min-w-[220px]">
+          <div className="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm">
+            <div className="flex flex-col gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_200px]">
+                <div>
                   <label className="mb-1 block text-sm font-medium text-zinc-800">
                     Search
                   </label>
@@ -260,18 +252,18 @@ export default function AdminOnboardingPage() {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Name, email, phone, team, ISP..."
-                    className="h-11 w-full rounded-2xl border border-zinc-300 px-4 text-sm outline-none transition placeholder:text-zinc-400 focus:border-zinc-900"
+                    className="h-11 w-full rounded-2xl border border-zinc-300 px-4 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-500 focus:border-zinc-900"
                   />
                 </div>
 
-                <div className="min-w-[180px]">
+                <div>
                   <label className="mb-1 block text-sm font-medium text-zinc-800">
                     Status
                   </label>
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="h-11 w-full rounded-2xl border border-zinc-300 px-4 text-sm outline-none transition focus:border-zinc-900"
+                    className="h-11 w-full rounded-2xl border border-zinc-300 px-4 text-sm text-zinc-900 outline-none transition focus:border-zinc-900"
                   >
                     <option value="all">All statuses</option>
                     <option value="pending">Pending</option>
@@ -282,23 +274,98 @@ export default function AdminOnboardingPage() {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={fetchRows}
-                  className="h-11 rounded-2xl border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-800 transition hover:bg-zinc-50"
-                >
-                  {loadingRows ? "Refreshing..." : "Refresh"}
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={fetchRows}
+                className="h-11 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-800 transition hover:bg-zinc-50 sm:w-auto sm:self-start"
+              >
+                {loadingRows ? "Refreshing..." : "Refresh"}
+              </button>
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm">
+          <div className="space-y-3 md:hidden">
+            {filteredRows.map((row) => {
+              const displayName = row.name || row.full_name || "-";
+              const displayIsp = row.isp || row.nsp || "-";
+
+              return (
+                <div key={row.id} className="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="truncate text-base font-semibold text-zinc-950">
+                        {displayName}
+                      </div>
+                      <div className="mt-1 break-all text-sm text-zinc-500">
+                        {row.email || "-"}
+                      </div>
+                    </div>
+                    <StatusPill status={row.status || "pending"} />
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    <InfoItem label="Phone" value={row.phone || "-"} />
+                    <InfoItem label="Coordinator" value={row.coordinator || "-"} />
+                    <InfoItem label="Team" value={row.team || "-"} />
+                    <InfoItem label="ISP" value={displayIsp} />
+                  </div>
+
+                  <div className="mt-3">
+                    <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+                      Created
+                    </div>
+                    <div className="mt-1 text-sm text-zinc-800">
+                      {row.created_at ? new Date(row.created_at).toLocaleString() : "-"}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex flex-col gap-2">
+                    <button
+                      onClick={() =>
+                        router.push(`/admin/${row.id}?table=${encodeURIComponent(tableName)}`)
+                      }
+                      className="w-full rounded-xl bg-zinc-900 px-3 py-2.5 text-sm font-semibold text-white transition hover:opacity-95"
+                    >
+                      View Submission
+                    </button>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <ActionButton
+                        label="Pending"
+                        onClick={() => updateStatus(row.id, "pending")}
+                        variant="light"
+                      />
+                      <ActionButton
+                        label="Approve"
+                        onClick={() => updateStatus(row.id, "approved")}
+                        variant="green"
+                      />
+                      <ActionButton
+                        label="Needs Info"
+                        onClick={() => updateStatus(row.id, "needs_info")}
+                        variant="yellow"
+                      />
+                      <ActionButton
+                        label="Reject"
+                        onClick={() => updateStatus(row.id, "rejected")}
+                        variant="red"
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
+            {filteredRows.length === 0 && (
+              <div className="rounded-3xl border border-zinc-200 bg-white px-4 py-8 text-center text-sm text-zinc-500 shadow-sm">
+                No submissions found.
+              </div>
+            )}
+          </div>
+
+          <div className="hidden overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm md:block">
             <div className="border-b border-zinc-200 px-5 py-4">
-              <h2 className="text-base font-semibold text-zinc-900">
-                Submissions
-              </h2>
+              <h2 className="text-base font-semibold text-zinc-900">Submissions</h2>
             </div>
 
             <div className="overflow-x-auto">
@@ -324,10 +391,7 @@ export default function AdminOnboardingPage() {
                     const displayIsp = row.isp || row.nsp || "-";
 
                     return (
-                      <tr
-                        key={row.id}
-                        className="border-b border-zinc-100 align-top"
-                      >
+                      <tr key={row.id} className="border-b border-zinc-100 align-top">
                         <td className="px-4 py-4 text-zinc-900">{displayName}</td>
                         <td className="px-4 py-4 text-zinc-700">{row.email || "-"}</td>
                         <td className="px-4 py-4 text-zinc-700">{row.phone || "-"}</td>
@@ -338,9 +402,7 @@ export default function AdminOnboardingPage() {
                           <StatusPill status={row.status || "pending"} />
                         </td>
                         <td className="px-4 py-4 text-zinc-700">
-                          {row.created_at
-                            ? new Date(row.created_at).toLocaleString()
-                            : "-"}
+                          {row.created_at ? new Date(row.created_at).toLocaleString() : "-"}
                         </td>
                         <td className="px-4 py-4">
                           <button
@@ -382,10 +444,7 @@ export default function AdminOnboardingPage() {
 
                   {filteredRows.length === 0 && (
                     <tr>
-                      <td
-                        colSpan={10}
-                        className="px-4 py-10 text-center text-sm text-zinc-500"
-                      >
+                      <td colSpan={10} className="px-4 py-10 text-center text-sm text-zinc-500">
                         No submissions found.
                       </td>
                     </tr>
@@ -402,11 +461,24 @@ export default function AdminOnboardingPage() {
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
-      <div className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+    <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-3 sm:px-4">
+      <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500 sm:text-xs">
         {label}
       </div>
-      <div className="mt-1 text-lg font-semibold text-zinc-950">{value}</div>
+      <div className="mt-1 text-2xl font-semibold leading-none text-zinc-950 sm:text-3xl">
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function InfoItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+        {label}
+      </div>
+      <div className="mt-1 text-sm text-zinc-900">{value}</div>
     </div>
   );
 }

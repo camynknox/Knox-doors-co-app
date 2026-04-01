@@ -125,15 +125,10 @@ export default function AdminDealsPage() {
   async function updateStatus(id: string, status: string) {
     const previousRows = rows;
 
-    setRows((prev) =>
-      prev.map((row) => (row.id === id ? { ...row, status } : row))
-    );
+    setRows((prev) => prev.map((row) => (row.id === id ? { ...row, status } : row)));
     setMessage(`Updating status to ${status}...`);
 
-    const { error } = await supabase
-      .from("deals")
-      .update({ status })
-      .eq("id", id);
+    const { error } = await supabase.from("deals").update({ status }).eq("id", id);
 
     if (error) {
       setRows(previousRows);
@@ -170,14 +165,9 @@ export default function AdminDealsPage() {
               .some((value) => String(value).toLowerCase().includes(q));
 
       const rowStatus = (row.status || "pending").toLowerCase();
-      const matchesStatus =
-        statusFilter === "all" ? true : rowStatus === statusFilter;
-
-      const matchesIsp =
-        ispFilter === "all" ? true : (row.isp || "") === ispFilter;
-
-      const matchesTeam =
-        teamFilter === "all" ? true : (row.team || "") === teamFilter;
+      const matchesStatus = statusFilter === "all" ? true : rowStatus === statusFilter;
+      const matchesIsp = ispFilter === "all" ? true : (row.isp || "") === ispFilter;
+      const matchesTeam = teamFilter === "all" ? true : (row.team || "") === teamFilter;
 
       return matchesSearch && matchesStatus && matchesIsp && matchesTeam;
     });
@@ -197,9 +187,9 @@ export default function AdminDealsPage() {
     return (
       <div className="min-h-screen bg-black text-white">
         <TopNav />
-        <div className="px-4 py-6">
+        <div className="px-4 py-4 sm:px-6">
           <div className="mx-auto max-w-7xl">
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
               <div className="text-sm text-zinc-300">{message}</div>
             </div>
           </div>
@@ -214,20 +204,20 @@ export default function AdminDealsPage() {
     <div className="min-h-screen bg-black text-white">
       <TopNav />
 
-      <div className="px-4 py-6 sm:px-6">
-        <div className="mx-auto max-w-7xl space-y-5">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <div className="px-4 py-4 sm:px-6 sm:py-5">
+        <div className="mx-auto max-w-7xl space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h1 className="text-4xl font-bold tracking-tight">Admin Deals</h1>
-              <p className="mt-2 text-base text-zinc-400">
-                Review submissions, filter the pipeline, and update statuses fast.
+              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Admin Deals</h1>
+              <p className="mt-1 text-sm text-zinc-400 sm:text-base">
+                Review submissions and update statuses fast.
               </p>
             </div>
 
             <button
               type="button"
               onClick={fetchRows}
-              className="h-12 rounded-2xl bg-white px-5 text-sm font-semibold text-black transition hover:bg-zinc-200"
+              className="h-10 rounded-2xl bg-white px-4 text-sm font-semibold text-black transition hover:bg-zinc-200 sm:h-11"
             >
               {loadingRows ? "Refreshing..." : "Refresh"}
             </button>
@@ -237,7 +227,7 @@ export default function AdminDealsPage() {
             {message}
           </div>
 
-          <div className="grid grid-cols-2 gap-3 xl:grid-cols-5">
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-5">
             <StatCard label="Total Deals" value={stats.total} />
             <StatCard label="Pending" value={stats.pending} />
             <StatCard label="Approved" value={stats.approved} />
@@ -245,8 +235,8 @@ export default function AdminDealsPage() {
             <StatCard label="Chargebacks" value={stats.chargebacks} />
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-white p-5 text-black shadow-sm">
-            <h2 className="text-2xl font-semibold">Filters</h2>
+          <div className="rounded-3xl border border-white/10 bg-white p-4 text-black shadow-sm sm:p-5">
+            <h2 className="text-xl font-semibold sm:text-2xl">Filters</h2>
 
             <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-12">
               <div className="lg:col-span-5">
@@ -256,8 +246,8 @@ export default function AdminDealsPage() {
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Customer, email, phone, order #, address..."
-                  className="h-12 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-500 focus:border-zinc-900"
+                  placeholder="Customer, email, phone, order #..."
+                  className="h-11 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-500 focus:border-zinc-900"
                 />
               </div>
 
@@ -268,7 +258,7 @@ export default function AdminDealsPage() {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="h-12 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition focus:border-zinc-900"
+                  className="h-11 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition focus:border-zinc-900"
                 >
                   <option value="all">All statuses</option>
                   <option value="pending">Pending</option>
@@ -285,7 +275,7 @@ export default function AdminDealsPage() {
                 <select
                   value={ispFilter}
                   onChange={(e) => setIspFilter(e.target.value)}
-                  className="h-12 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition focus:border-zinc-900"
+                  className="h-11 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition focus:border-zinc-900"
                 >
                   <option value="all">All ISPs</option>
                   {ISP_OPTIONS.map((option) => (
@@ -303,7 +293,7 @@ export default function AdminDealsPage() {
                 <select
                   value={teamFilter}
                   onChange={(e) => setTeamFilter(e.target.value)}
-                  className="h-12 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition focus:border-zinc-900"
+                  className="h-11 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-sm text-zinc-900 outline-none transition focus:border-zinc-900"
                 >
                   <option value="all">All teams</option>
                   {teamOptions.map((option) => (
@@ -316,7 +306,74 @@ export default function AdminDealsPage() {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-3xl border border-white/10 bg-white text-black shadow-sm">
+          <div className="space-y-3 md:hidden">
+            {filteredRows.map((row) => (
+              <div key={row.id} className="rounded-3xl border border-white/10 bg-white p-4 text-black shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-base font-semibold text-zinc-950">{row.customer || "-"}</div>
+                    <div className="mt-1 text-sm text-zinc-500">{row.customer_email || "-"}</div>
+                  </div>
+                  <StatusPill status={row.status || "pending"} />
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                  <InfoItem label="Team" value={row.team || "-"} />
+                  <InfoItem label="ISP" value={row.isp || "-"} />
+                  <InfoItem label="Package" value={row.package || "-"} />
+                  <InfoItem label="Phone" value={row.phone || "-"} />
+                  <InfoItem label="Voice / TV" value={`${row.voice || "-"} / ${row.tv || "-"}`} />
+                  <InfoItem label="Install" value={row.install_date || "-"} />
+                </div>
+
+                <div className="mt-3">
+                  <div className="text-xs font-medium uppercase tracking-wide text-zinc-500">Address</div>
+                  <div className="mt-1 text-sm text-zinc-800">{row.address || "-"}</div>
+                </div>
+
+                <div className="mt-3">
+                  <div className="text-xs font-medium uppercase tracking-wide text-zinc-500">VAS</div>
+                  <div className="mt-1 text-sm text-zinc-800">{row.vas || "-"}</div>
+                </div>
+
+                <div className="mt-3">
+                  <div className="text-xs font-medium uppercase tracking-wide text-zinc-500">Order #</div>
+                  <div className="mt-1 text-sm text-zinc-800">{row.order_number || "-"}</div>
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <ActionButton
+                    label="Pending"
+                    onClick={() => updateStatus(row.id, "pending")}
+                    variant="light"
+                  />
+                  <ActionButton
+                    label="Approve"
+                    onClick={() => updateStatus(row.id, "approved")}
+                    variant="green"
+                  />
+                  <ActionButton
+                    label="Installed"
+                    onClick={() => updateStatus(row.id, "installed")}
+                    variant="blue"
+                  />
+                  <ActionButton
+                    label="Chargeback"
+                    onClick={() => updateStatus(row.id, "chargeback")}
+                    variant="red"
+                  />
+                </div>
+              </div>
+            ))}
+
+            {filteredRows.length === 0 && (
+              <div className="rounded-3xl border border-white/10 bg-white px-4 py-8 text-center text-sm text-zinc-500 shadow-sm">
+                No deals found.
+              </div>
+            )}
+          </div>
+
+          <div className="hidden overflow-hidden rounded-3xl border border-white/10 bg-white text-black shadow-sm md:block">
             <div className="border-b border-zinc-200 px-5 py-4">
               <h2 className="text-lg font-semibold">Deals</h2>
             </div>
@@ -406,9 +463,20 @@ export default function AdminDealsPage() {
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-3xl bg-white p-6 text-black shadow-sm">
-      <div className="text-sm font-medium text-slate-500">{label}</div>
-      <div className="mt-4 text-4xl font-bold leading-none">{value}</div>
+    <div className="rounded-2xl bg-white p-3 text-black shadow-sm sm:p-4">
+      <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500 sm:text-xs">
+        {label}
+      </div>
+      <div className="mt-1 text-2xl font-bold leading-none sm:mt-2 sm:text-3xl">{value}</div>
+    </div>
+  );
+}
+
+function InfoItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">{label}</div>
+      <div className="mt-1 text-sm text-zinc-900">{value}</div>
     </div>
   );
 }
