@@ -104,6 +104,7 @@ export default function TeamDashboardPage() {
       pending: deals.filter((d) => (d.status || "pending") === "pending").length,
       approved: deals.filter((d) => d.status === "approved").length,
       installed: deals.filter((d) => d.status === "installed").length,
+      chargebacks: deals.filter((d) => d.status === "chargeback").length,
     };
   }, [deals]);
 
@@ -137,11 +138,12 @@ export default function TeamDashboardPage() {
             {message}
           </div>
 
-          <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
+          <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
             <StatCard label="Deals" value={stats.total} />
             <StatCard label="Pending" value={stats.pending} />
             <StatCard label="Approved" value={stats.approved} />
             <StatCard label="Installed" value={stats.installed} />
+            <StatCard label="Chargebacks" value={stats.chargebacks} />
           </div>
 
           <div className="space-y-3">
