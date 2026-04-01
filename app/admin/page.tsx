@@ -21,7 +21,9 @@ type RowType = {
   email?: string | null;
   phone?: string | null;
   coordinator?: string | null;
+  onboarding_coordinator?: string | null;
   team?: string | null;
+  team_name?: string | null;
   isp?: string | null;
   nsp?: string | null;
   status?: string | null;
@@ -39,6 +41,8 @@ export default function AdminOnboardingPage() {
   const [tableName, setTableName] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [currentUserRole, setCurrentUserRole] = useState("");
+  const [deletingId, setDeletingId] = useState("");
 
   useEffect(() => {
     init();
@@ -68,6 +72,7 @@ export default function AdminOnboardingPage() {
     }
 
     const role = profile.role;
+    setCurrentUserRole(role);
 
     if (role === "admin" || role === "assistant_admin") {
       setAuthorized(true);
@@ -156,6 +161,42 @@ export default function AdminOnboardingPage() {
     setMessage(`Status updated to ${status}.`);
   }
 
+  async function handleDeleteSubmission(id: string) {
+    if (currentUserRole !== "admin") {
+      setMessage("Only the Owner can delete submissions.");
+      return;
+    }
+
+    if (!tableName) {
+      setMessage("Could not find onboarding table.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Delete this onboarding submission? This removes it from onboarding review."
+    );
+
+    if (!confirmed) return;
+
+    setDeletingId(id);
+    setMessage("Deleting submission...");
+
+    const previousRows = rows;
+    setRows((prev) => prev.filter((row) => row.id !== id));
+
+    const { error } = await supabase.from(tableName).delete().eq("id", id);
+
+    setDeletingId("");
+
+    if (error) {
+      setRows(previousRows);
+      setMessage("Delete error: " + error.message);
+      return;
+    }
+
+    setMessage("Submission deleted.");
+  }
+
   const filteredRows = useMemo(() => {
     return rows.filter((row) => {
       const currentStatus = (row.status || "pending").toLowerCase();
@@ -171,7 +212,9 @@ export default function AdminOnboardingPage() {
               row.email,
               row.phone,
               row.coordinator,
+              row.onboarding_coordinator,
               row.team,
+              row.team_name,
               row.isp,
               row.nsp,
             ]
@@ -187,9 +230,8 @@ export default function AdminOnboardingPage() {
     const pending = rows.filter((r) => (r.status || "pending") === "pending").length;
     const approved = rows.filter((r) => r.status === "approved").length;
     const needsInfo = rows.filter((r) => r.status === "needs_info").length;
-    const rejected = rows.filter((r) => r.status === "rejected").length;
 
-    return { total, pending, approved, needsInfo, rejected };
+    return { total, pending, approved, needsInfo };
   }, [rows]);
 
   if (checking) {
@@ -226,12 +268,11 @@ export default function AdminOnboardingPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-5">
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
                 <StatCard label="Total" value={counts.total} />
                 <StatCard label="Pending" value={counts.pending} />
                 <StatCard label="Approved" value={counts.approved} />
                 <StatCard label="Needs Info" value={counts.needsInfo} />
-                <StatCard label="Rejected" value={counts.rejected} />
               </div>
             </div>
           </div>
@@ -288,6 +329,8 @@ export default function AdminOnboardingPage() {
             {filteredRows.map((row) => {
               const displayName = row.name || row.full_name || "-";
               const displayIsp = row.isp || row.nsp || "-";
+              const displayCoordinator = row.coordinator || row.onboarding_coordinator || "-";
+              const displayTeam = row.team || row.team_name || "-";
 
               return (
                 <div key={row.id} className="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm">
@@ -305,8 +348,8 @@ export default function AdminOnboardingPage() {
 
                   <div className="mt-4 grid grid-cols-2 gap-3">
                     <InfoItem label="Phone" value={row.phone || "-"} />
-                    <InfoItem label="Coordinator" value={row.coordinator || "-"} />
-                    <InfoItem label="Team" value={row.team || "-"} />
+                    <InfoItem label="Coordinator" value={displayCoordinator} />
+                    <InfoItem label="Team" value={displayTeam} />
                     <InfoItem label="ISP" value={displayIsp} />
                   </div>
 
@@ -346,11 +389,23 @@ export default function AdminOnboardingPage() {
                         variant="yellow"
                       />
                       <ActionButton
-                        label="Reject"
-                        onClick={() => updateStatus(row.id, "rejected")}
-                        variant="red"
+                        label="Edit"
+                        onClick={() =>
+                          router.push(`/admin/${row.id}?table=${encodeURIComponent(tableName)}`)
+                        }
+                        variant="blue"
                       />
                     </div>
+
+                    {currentUserRole === "admin" && (
+                      <button
+                        onClick={() => handleDeleteSubmission(row.id)}
+                        disabled={deletingId === row.id}
+                        className="w-full rounded-xl bg-zinc-900 px-3 py-2.5 text-sm font-semibold text-white transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {deletingId === row.id ? "Deleting..." : "Delete Submission"}
+                      </button>
+                    )}
                   </div>
                 </div>
               );
@@ -380,7 +435,6 @@ export default function AdminOnboardingPage() {
                     <th className="px-4 py-3 font-semibold text-zinc-700">ISP</th>
                     <th className="px-4 py-3 font-semibold text-zinc-700">Status</th>
                     <th className="px-4 py-3 font-semibold text-zinc-700">Created</th>
-                    <th className="px-4 py-3 font-semibold text-zinc-700">View</th>
                     <th className="px-4 py-3 font-semibold text-zinc-700">Actions</th>
                   </tr>
                 </thead>
@@ -389,14 +443,16 @@ export default function AdminOnboardingPage() {
                   {filteredRows.map((row) => {
                     const displayName = row.name || row.full_name || "-";
                     const displayIsp = row.isp || row.nsp || "-";
+                    const displayCoordinator = row.coordinator || row.onboarding_coordinator || "-";
+                    const displayTeam = row.team || row.team_name || "-";
 
                     return (
                       <tr key={row.id} className="border-b border-zinc-100 align-top">
                         <td className="px-4 py-4 text-zinc-900">{displayName}</td>
                         <td className="px-4 py-4 text-zinc-700">{row.email || "-"}</td>
                         <td className="px-4 py-4 text-zinc-700">{row.phone || "-"}</td>
-                        <td className="px-4 py-4 text-zinc-700">{row.coordinator || "-"}</td>
-                        <td className="px-4 py-4 text-zinc-700">{row.team || "-"}</td>
+                        <td className="px-4 py-4 text-zinc-700">{displayCoordinator}</td>
+                        <td className="px-4 py-4 text-zinc-700">{displayTeam}</td>
                         <td className="px-4 py-4 text-zinc-700">{displayIsp}</td>
                         <td className="px-4 py-4">
                           <StatusPill status={row.status || "pending"} />
@@ -405,17 +461,16 @@ export default function AdminOnboardingPage() {
                           {row.created_at ? new Date(row.created_at).toLocaleString() : "-"}
                         </td>
                         <td className="px-4 py-4">
-                          <button
-                            onClick={() =>
-                              router.push(`/admin/${row.id}?table=${encodeURIComponent(tableName)}`)
-                            }
-                            className="rounded-xl bg-zinc-900 px-3 py-2 text-xs font-semibold text-white transition hover:opacity-95"
-                          >
-                            View
-                          </button>
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="flex flex-wrap gap-2">
+                          <div className="grid w-[220px] grid-cols-2 gap-2">
+                            <button
+                              onClick={() =>
+                                router.push(`/admin/${row.id}?table=${encodeURIComponent(tableName)}`)
+                              }
+                              className="col-span-2 rounded-xl bg-zinc-900 px-3 py-2.5 text-xs font-semibold text-white transition hover:opacity-95"
+                            >
+                              View Submission
+                            </button>
+
                             <ActionButton
                               label="Pending"
                               onClick={() => updateStatus(row.id, "pending")}
@@ -432,10 +487,22 @@ export default function AdminOnboardingPage() {
                               variant="yellow"
                             />
                             <ActionButton
-                              label="Reject"
-                              onClick={() => updateStatus(row.id, "rejected")}
-                              variant="red"
+                              label="Edit"
+                              onClick={() =>
+                                router.push(`/admin/${row.id}?table=${encodeURIComponent(tableName)}`)
+                              }
+                              variant="blue"
                             />
+
+                            {currentUserRole === "admin" && (
+                              <button
+                                onClick={() => handleDeleteSubmission(row.id)}
+                                disabled={deletingId === row.id}
+                                className="col-span-2 rounded-xl bg-zinc-900 px-3 py-2.5 text-xs font-semibold text-white transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {deletingId === row.id ? "Deleting..." : "Delete Submission"}
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -444,7 +511,7 @@ export default function AdminOnboardingPage() {
 
                   {filteredRows.length === 0 && (
                     <tr>
-                      <td colSpan={10} className="px-4 py-10 text-center text-sm text-zinc-500">
+                      <td colSpan={9} className="px-4 py-10 text-center text-sm text-zinc-500">
                         No submissions found.
                       </td>
                     </tr>
@@ -524,7 +591,7 @@ function ActionButton({
 }: {
   label: string;
   onClick: () => void;
-  variant: "light" | "green" | "yellow" | "red";
+  variant: "light" | "green" | "yellow" | "red" | "blue";
 }) {
   const styles =
     variant === "green"
@@ -533,6 +600,8 @@ function ActionButton({
       ? "bg-amber-500 text-white hover:bg-amber-600"
       : variant === "red"
       ? "bg-red-600 text-white hover:bg-red-700"
+      : variant === "blue"
+      ? "bg-zinc-900 text-white hover:opacity-95"
       : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200";
 
   return (
