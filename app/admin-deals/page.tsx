@@ -235,7 +235,7 @@ export default function AdminDealsPage() {
             {message}
           </div>
 
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
             <StatCard label="Deals" value={stats.total} />
             <StatCard label="Pending" value={stats.pending} />
             <StatCard label="Approved" value={stats.approved} />
@@ -317,7 +317,7 @@ export default function AdminDealsPage() {
                   key={row.id}
                   className="rounded-3xl border border-white/10 bg-white p-3 text-black shadow-sm sm:p-4"
                 >
-                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-stretch lg:justify-between">
                     <div className="min-w-0 flex-1">
                       <div className="grid grid-cols-3 gap-x-3 gap-y-2 text-sm">
                         <CompactItem label="Team" value={row.team || "-"} />
@@ -344,12 +344,12 @@ export default function AdminDealsPage() {
                       </div>
                     </div>
 
-                    <div className="lg:w-[260px] lg:pl-4">
+                    <div className="lg:w-[280px] lg:pl-4">
                       <div className="mb-2 flex lg:justify-end">
                         <StatusPill status={row.status || "pending"} />
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-2 gap-2 h-full content-start">
                         <ActionButton
                           label="Pending"
                           onClick={() => updateStatus(row.id, "pending")}
@@ -406,11 +406,13 @@ function Field({
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-2xl bg-white px-2.5 py-2 text-black shadow-sm">
-      <div className="truncate text-[9px] font-medium uppercase tracking-wide text-slate-500 sm:text-[11px]">
+    <div className="min-w-0 rounded-2xl bg-white px-1.5 py-2 text-black shadow-sm sm:px-2.5">
+      <div className="text-center text-[8px] font-medium uppercase tracking-tight text-slate-500 sm:text-[10px]">
         {label}
       </div>
-      <div className="mt-1 text-lg font-bold leading-none sm:text-2xl">{value}</div>
+      <div className="mt-1 text-center text-lg font-bold leading-none sm:text-2xl">
+        {value}
+      </div>
     </div>
   );
 }
@@ -475,15 +477,15 @@ function ActionButton({
     variant === "green"
       ? "bg-emerald-600 text-white hover:bg-emerald-700"
       : variant === "blue"
-        ? "bg-blue-600 text-white hover:bg-blue-700"
-        : variant === "red"
-          ? "bg-red-600 text-white hover:bg-red-700"
-          : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200";
+      ? "bg-blue-600 text-white hover:bg-blue-700"
+      : variant === "red"
+      ? "bg-red-600 text-white hover:bg-red-700"
+      : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200";
 
   return (
     <button
       onClick={onClick}
-      className={`rounded-xl px-3 py-2.5 text-sm font-semibold transition ${styles}`}
+      className={`h-12 rounded-2xl px-3 text-sm font-semibold transition flex items-center justify-center ${styles}`}
     >
       {label}
     </button>
