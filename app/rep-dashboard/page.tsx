@@ -1,14 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import TopNav from "@/app/components/top-nav";
 import { supabase } from "@/app/lib/supabase";
 
 export default function Page() {
+  const router = useRouter();
+
   const [repEmail, setRepEmail] = useState("");
   const [repName, setRepName] = useState("");
   const [deals, setDeals] = useState<any[]>([]);
   const [message, setMessage] = useState("Loading dashboard...");
+  const [checkingAccess, setCheckingAccess] = useState(true);
 
   useEffect(() => {
     loadDashboard();
@@ -21,19 +25,76 @@ export default function Page() {
     } = await supabase.auth.getUser();
 
     if (userError || !user?.email) {
-      setMessage("Could not load user.");
+      router.push("/login");
       return;
     }
 
-    setRepEmail(user.email);
+    const cleanEmail = user.email.trim().toLowerCase();
+    setRepEmail(cleanEmail);
 
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("*")
-      .eq("email", user.email)
-      .single();
+      .select("full_name, name, role")
+      .eq("email", cleanEmail)
+      .maybeSingle();
+
+    if (profileError) {
+      setMessage(profileError.message);
+      setCheckingAccess(false);
+      return;
+    }
+
+    const role = profile?.role || "";
+
+    if (role === "admin" || role === "assistant_admin") {
+      router.push("/admin-deals");
+      return;
+    }
+
+    if (role === "team_leader") {
+      router.push("/team-dashboard");
+      return;
+    }
 
     setRepName(profile?.full_name || profile?.name || "");
+
+    const { data: onboarding, error: onboardingError } = await supabase
+      .from("onboarding_forms")
+      .select("*")
+      .eq("email", cleanEmail)
+      .maybeSingle();
+
+    if (onboardingError) {
+      setMessage(onboardingError.message);
+      setCheckingAccess(false);
+      return;
+    }
+
+    const onboardingComplete =
+      !!onboarding &&
+      !!onboarding.full_name &&
+      !!onboarding.phone &&
+      !!onboarding.onboarding_coordinator &&
+      !!onboarding.team_name &&
+      !!onboarding.isp &&
+      !!onboarding.street_address &&
+      !!onboarding.city &&
+      !!onboarding.state &&
+      !!onboarding.zip_code &&
+      !!onboarding.country &&
+      !!onboarding.shirt_size &&
+      !!onboarding.bank_name &&
+      !!onboarding.routing_number &&
+      !!onboarding.account_number &&
+      !!onboarding.date_of_birth &&
+      !!onboarding.ssn &&
+      !!onboarding.signature &&
+      !!onboarding.background_check_consent;
+
+    if (!onboardingComplete) {
+      router.push("/onboarding");
+      return;
+    }
 
     const { data, error } = await supabase
       .from("deals")
@@ -42,6 +103,7 @@ export default function Page() {
 
     if (error) {
       setMessage(error.message);
+      setCheckingAccess(false);
       return;
     }
 
@@ -49,7 +111,7 @@ export default function Page() {
       const emailField = String(deal.email || "").toLowerCase();
       const repField = String(deal.rep || "").toLowerCase();
       const repNameField = String(deal.rep_name || "").toLowerCase();
-      const currentEmail = String(user.email).toLowerCase();
+      const currentEmail = cleanEmail;
 
       return (
         emailField === currentEmail ||
@@ -60,6 +122,7 @@ export default function Page() {
 
     setDeals(myDeals);
     setMessage(`Loaded ${myDeals.length} deal(s).`);
+    setCheckingAccess(false);
   }
 
   const stats = useMemo(() => {
@@ -70,6 +133,30 @@ export default function Page() {
       installed: deals.filter((d) => d.status === "installed").length,
     };
   }, [deals]);
+
+  if (checkingAccess) {
+    return (
+      <div>
+        <TopNav />
+        <div style={{ padding: "24px", marginTop: "10px", fontFamily: "system-ui" }}>
+          <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+            <div
+              style={{
+                fontSize: "14px",
+                padding: "12px 14px",
+                borderRadius: "10px",
+                background: "#f8fafc",
+                border: "1px solid #e5e7eb",
+                color: "#334155",
+              }}
+            >
+              Checking dashboard access...
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -186,7 +273,10 @@ export default function Page() {
 
                   {deals.length === 0 && (
                     <tr>
-                      <td colSpan={7} style={{ padding: "24px", textAlign: "center", color: "#666" }}>
+                      <td
+                        colSpan={7}
+                        style={{ padding: "24px", textAlign: "center", color: "#666" }}
+                      >
                         No deals found.
                       </td>
                     </tr>
