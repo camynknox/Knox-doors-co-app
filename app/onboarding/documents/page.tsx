@@ -73,6 +73,82 @@ export default function DocumentsPage() {
 
   async function handleFinish(e: React.FormEvent) {
     e.preventDefault();
+
+    if (!streetAddress.trim()) {
+      alert("Please enter your street address.");
+      return;
+    }
+
+    if (!city.trim()) {
+      alert("Please enter your city.");
+      return;
+    }
+
+    if (!stateValue.trim()) {
+      alert("Please enter your state.");
+      return;
+    }
+
+    if (!zipCode.trim()) {
+      alert("Please enter your zip code.");
+      return;
+    }
+
+    if (!country.trim()) {
+      alert("Please enter your country.");
+      return;
+    }
+
+    if (!shirtSize.trim()) {
+      alert("Please enter your shirt size.");
+      return;
+    }
+
+    if (!bankName.trim()) {
+      alert("Please enter your bank name.");
+      return;
+    }
+
+    if (!routingNumber.trim()) {
+      alert("Please enter your routing number.");
+      return;
+    }
+
+    if (!accountNumber.trim()) {
+      alert("Please enter your account number.");
+      return;
+    }
+
+    if (!dateOfBirth) {
+      alert("Please enter your date of birth.");
+      return;
+    }
+
+    if (!ssn.trim()) {
+      alert("Please enter your SSN.");
+      return;
+    }
+
+    if (!idFile) {
+      alert("Please upload your ID.");
+      return;
+    }
+
+    if (!badgeFile) {
+      alert("Please upload your badge photo.");
+      return;
+    }
+
+    if (!backgroundCheckConsent) {
+      alert("You must agree to the background check consent.");
+      return;
+    }
+
+    if (!signature.trim()) {
+      alert("Please type your signature.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -162,10 +238,11 @@ export default function DocumentsPage() {
                 value={streetAddress}
                 onChange={(e) => setStreetAddress(e.target.value)}
                 className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-zinc-900 outline-none"
+                required
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm font-medium text-zinc-700">
                   City
@@ -174,6 +251,7 @@ export default function DocumentsPage() {
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-zinc-900 outline-none"
+                  required
                 />
               </div>
 
@@ -185,11 +263,12 @@ export default function DocumentsPage() {
                   value={stateValue}
                   onChange={(e) => setStateValue(e.target.value)}
                   className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-zinc-900 outline-none"
+                  required
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm font-medium text-zinc-700">
                   Zip Code
@@ -198,6 +277,7 @@ export default function DocumentsPage() {
                   value={zipCode}
                   onChange={(e) => setZipCode(e.target.value)}
                   className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-zinc-900 outline-none"
+                  required
                 />
               </div>
 
@@ -209,6 +289,7 @@ export default function DocumentsPage() {
                   value={country}
                   onChange={(e) => setCountry(e.target.value)}
                   className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-zinc-900 outline-none"
+                  required
                 />
               </div>
             </div>
@@ -221,6 +302,7 @@ export default function DocumentsPage() {
                 value={shirtSize}
                 onChange={(e) => setShirtSize(e.target.value)}
                 className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-zinc-900 outline-none"
+                required
               />
             </div>
 
@@ -232,6 +314,7 @@ export default function DocumentsPage() {
                 value={bankName}
                 onChange={(e) => setBankName(e.target.value)}
                 className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-zinc-900 outline-none"
+                required
               />
             </div>
 
@@ -243,6 +326,7 @@ export default function DocumentsPage() {
                 value={routingNumber}
                 onChange={(e) => setRoutingNumber(e.target.value)}
                 className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-zinc-900 outline-none"
+                required
               />
             </div>
 
@@ -254,6 +338,7 @@ export default function DocumentsPage() {
                 value={accountNumber}
                 onChange={(e) => setAccountNumber(e.target.value)}
                 className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-zinc-900 outline-none"
+                required
               />
             </div>
 
@@ -266,6 +351,7 @@ export default function DocumentsPage() {
                 value={dateOfBirth}
                 onChange={(e) => setDateOfBirth(e.target.value)}
                 className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-zinc-900 outline-none"
+                required
               />
             </div>
 
@@ -277,6 +363,7 @@ export default function DocumentsPage() {
                 value={ssn}
                 onChange={(e) => setSsn(e.target.value)}
                 className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-zinc-900 outline-none"
+                required
               />
             </div>
 
@@ -288,6 +375,7 @@ export default function DocumentsPage() {
                 type="file"
                 onChange={(e) => setIdFile(e.target.files?.[0] || null)}
                 className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-zinc-900 outline-none"
+                required
               />
             </div>
 
@@ -299,16 +387,21 @@ export default function DocumentsPage() {
                 type="file"
                 onChange={(e) => setBadgeFile(e.target.files?.[0] || null)}
                 className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-zinc-900 outline-none"
+                required
               />
             </div>
 
-            <label className="flex items-center gap-2 text-sm text-zinc-700">
+            <label className="flex items-start gap-2 text-sm text-zinc-700">
               <input
                 type="checkbox"
                 checked={backgroundCheckConsent}
                 onChange={(e) => setBackgroundCheckConsent(e.target.checked)}
+                required
+                className="mt-1"
               />
-              I consent to a background check and potential drug test.
+              <span>
+                I consent to a background check and potential drug test.
+              </span>
             </label>
 
             <div>
@@ -320,6 +413,7 @@ export default function DocumentsPage() {
                 onChange={(e) => setSignature(e.target.value)}
                 placeholder="Type your full name"
                 className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-zinc-900 outline-none"
+                required
               />
             </div>
 
